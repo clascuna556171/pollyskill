@@ -1,0 +1,40 @@
+{
+  "name": "polyskill",
+  "version": "1.0.0",
+  "description": "Universal static compiler for agent skills — compile CLI scripts, APIs, and specs into Antigravity, MCP, Cursor, and OpenAI skills with deterministic guardrails.",
+  "main": "dist/index.js",
+  "bin": {
+    "polyskill": "bin/polyskill.js"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli/index.ts",
+    "test": "tsx --test tests/**/*.test.ts",
+    "ui": "tsx src/cli/index.ts ui",
+    "inspect": "tsx src/cli/index.ts inspect",
+    "compile": "tsx src/cli/index.ts compile"
+  },
+  "keywords": [
+    "agentic-ai",
+    "antigravity",
+    "model-context-protocol",
+    "mcp",
+    "cursorrules",
+    "skills",
+    "compiler",
+    "guardrails"
+  ],
+  "author": "Polyskill Core Team",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.1.0",
+    "picocolors": "^1.1.0",
+    "yaml": "^2.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
