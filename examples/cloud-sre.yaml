@@ -1,0 +1,60 @@
+name: ecs-service-sre
+displayName: AWS ECS Incident Recovery
+version: 1.2.0
+description: Incident response automation skill to restart unhealthy ECS tasks, scale task counts, or rollback faulty deployments.
+category: cloud
+
+workflowInstructions: |
+  1. Check task health status with check_cluster_health.
+  2. For high CPU/memory pressure, scale task count with scale_service.
+  3. If newly deployed task crashes, invoke rollback_deployment.
+  4. Always simulate changes with dryRun before modifying production capacity.
+
+triggerPhrases:
+  - "check ECS task health"
+  - "rollback failing deployment"
+  - "scale ECS service"
+
+tools:
+  - name: check_cluster_health
+    description: Query ECS cluster CPU, memory, and container restart metrics.
+    riskLevel: read_only
+    parameters:
+      cluster_name:
+        type: string
+        description: Target ECS cluster name
+        required: true
+      service_name:
+        type: string
+        description: ECS service name
+        required: true
+
+  - name: scale_service
+    description: Scale desired container task count for an ECS service.
+    riskLevel: idempotent_write
+    parameters:
+      cluster_name:
+        type: string
+        required: true
+      service_name:
+        type: string
+        required: true
+      desired_count:
+        type: integer
+        required: true
+        description: Desired number of running task replicas
+
+  - name: rollback_deployment
+    description: Force rollback service to previous stable task definition revision.
+    riskLevel: destructive_write
+    parameters:
+      cluster_name:
+        type: string
+        required: true
+      service_name:
+        type: string
+        required: true
+      target_revision:
+        type: string
+        required: false
+        description: Specific revision number to pin

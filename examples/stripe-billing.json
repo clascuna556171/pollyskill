@@ -1,0 +1,72 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Stripe Billing Ops",
+    "version": "2026-03-01",
+    "description": "Operations skill for managing customer subscriptions, invoices, and payment refunds."
+  },
+  "servers": [{ "url": "https://api.stripe.com/v1" }],
+  "paths": {
+    "/customers/{customerId}/subscriptions": {
+      "get": {
+        "operationId": "list_customer_subscriptions",
+        "summary": "List active subscriptions for a customer",
+        "parameters": [
+          { "name": "customerId", "in": "path", "required": true, "description": "Stripe customer ID (cus_xxx)", "schema": { "type": "string" } },
+          { "name": "status", "in": "query", "required": false, "description": "Subscription status filter (active, past_due, canceled)", "schema": { "type": "string" } }
+        ]
+      }
+    },
+    "/invoices/{invoiceId}/finalize": {
+      "post": {
+        "operationId": "finalize_invoice",
+        "summary": "Finalize an existing draft invoice",
+        "parameters": [
+          { "name": "invoiceId", "in": "path", "required": true, "description": "Invoice ID (in_xxx)", "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "auto_advance": { "type": "boolean", "description": "Automatically charge payment source" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/refunds": {
+      "post": {
+        "operationId": "create_refund",
+        "summary": "Issue a partial or full payment refund",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["chargeId", "amount_cents"],
+                "properties": {
+                  "chargeId": { "type": "string", "description": "Stripe charge identifier (ch_xxx)" },
+                  "amount_cents": { "type": "integer", "description": "Amount to refund in cents" },
+                  "reason": { "type": "string", "description": "Customer reason (duplicate, fraudulent, requested_by_customer)" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customerId}": {
+      "delete": {
+        "operationId": "delete_customer",
+        "summary": "Permanently delete a customer record and detach cards",
+        "parameters": [
+          { "name": "customerId", "in": "path", "required": true, "description": "Stripe customer ID to purge", "schema": { "type": "string" } }
+        ]
+      }
+    }
+  }
+}
