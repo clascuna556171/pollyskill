@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PolySkill — Agent Skill Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="pro-dark">
+  <div class="workspace-layout">
+    
+    <!-- LEFT SIDEBAR: SKILL REPOSITORY -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-identity">
+          <img src="logo.png" alt="PolySkill" class="brand-logo" width="32" height="32">
+          <div class="brand-meta">
+            <span class="brand-name">PolySkill</span>
+            <span class="brand-version">v1.0.0</span>
+          </div>
+        </div>
+        <button id="openCreateModalBtn" class="btn-create-skill">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>New Skill</span>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- Your Custom Skills -->
+        <div class="nav-section-title">Your Custom Skills</div>
+        <div id="customSkillsList" class="nav-items-group">
+          <!-- Dynamically populated when user generates custom skills -->
+        </div>
+
+        <!-- Built-in Templates -->
+        <div class="nav-section-title">Verified Templates</div>
+        <div class="nav-items-group">
+          <button class="nav-item active" data-skill="stripe-billing">
+            <span class="nav-item-icon">💳</span>
+            <div class="nav-item-text">
+              <span class="nav-item-title">Stripe Billing Ops</span>
+              <span class="nav-item-sub">OpenAPI v3 Spec</span>
+            </div>
+          </button>
+
+          <button class="nav-item" data-skill="postgres-ops">
+            <span class="nav-item-icon">🐘</span>
+            <div class="nav-item-text">
+              <span class="nav-item-title">Postgres Migrations</span>
+              <span class="nav-item-sub">Python Script</span>
+            </div>
+          </button>
+
+          <button class="nav-item" data-skill="cloud-sre">
+            <span class="nav-item-icon">☁️</span>
+            <div class="nav-item-text">
+              <span class="nav-item-title">AWS ECS Recovery</span>
+              <span class="nav-item-sub">SkillSpec Runbook</span>
+            </div>
+          </button>
+
+          <button class="nav-item" data-skill="ui-ux-design">
+            <span class="nav-item-icon">🎨</span>
+            <div class="nav-item-text">
+              <span class="nav-item-title">UI/UX Design Reviewer</span>
+              <span class="nav-item-sub">Apple HIG & Contrast</span>
+            </div>
+          </button>
+        </div>
+      </nav>
+
+      <!-- Sidebar Footer Status -->
+      <div class="sidebar-footer">
+        <div class="safety-status-card">
+          <div class="status-indicator">
+            <span class="dot-green"></span>
+            <span class="status-label">Security Shield Active</span>
+          </div>
+          <p class="status-caption">Path traversal and destructive mutation guards enforced.</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER CANVAS: ACTIVE SKILL WORKSPACE -->
+    <main class="canvas">
+      <!-- Skill Header Banner -->
+      <header class="canvas-header">
+        <div class="canvas-header-left">
+          <div class="title-row">
+            <h1 id="activeSkillTitle" class="skill-main-title">Stripe Billing Ops</h1>
+            <span id="activeSkillCategoryBadge" class="category-badge">Finance & APIs</span>
+            <span id="activeSkillSafetyScore" class="score-pill">100% Protected</span>
+          </div>
+          <p id="activeSkillDesc" class="skill-main-desc">Operations skill for managing customer subscriptions, invoices, and payment refunds.</p>
+        </div>
+
+        <div class="canvas-header-actions">
+          <button id="copyBareMdBtn" class="btn-copy-md" title="Copy raw SKILL.md markdown directly to clipboard">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <span class="btn-copy-md-text">Copy Raw .md</span>
+          </button>
+          <button id="refineSkillBtn" class="btn-refine">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            <span>Edit / Refine</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Canvas Content Scrollable Area -->
+      <div class="canvas-scroll-body">
+        
+        <!-- SECTION 1: CAPABILITIES -->
+        <section class="canvas-section">
+          <div class="section-title-bar">
+            <h2 class="section-title">Agent Capabilities</h2>
+            <span id="toolCountLabel" class="section-count">4 capabilities ready</span>
+          </div>
+          <div id="capabilitiesGrid" class="capabilities-grid">
+            <!-- Dynamically populated capability cards -->
+          </div>
+        </section>
+
+        <!-- SECTION 2: INTERACTIVE TEST BENCH -->
+        <section class="canvas-section">
+          <div class="section-title-bar">
+            <h2 class="section-title">Interactive Safety Test Bench</h2>
+            <span class="section-caption">Test tools in an isolated sandbox with zero side-effects</span>
+          </div>
+
+          <div class="test-bench-panel">
+            <div class="bench-top-bar">
+              <div class="bench-selector-group">
+                <label for="benchToolSelect" class="bench-label">Select Capability:</label>
+                <select id="benchToolSelect" class="bench-select"></select>
+              </div>
+
+              <div class="bench-actions-group">
+                <button id="benchSafeBtn" class="btn-bench safe">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  <span>Test Safe Run (dryRun)</span>
+                </button>
+                <button id="benchExploitBtn" class="btn-bench exploit">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                  <span>Simulate Threat Block (../)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Test Output Box -->
+            <div class="bench-output-box">
+              <div class="bench-output-header">
+                <div class="output-status-wrap">
+                  <span id="benchStatusPill" class="bench-pill ready">Standby</span>
+                  <span id="benchLatency" class="bench-latency">—</span>
+                </div>
+                <span class="output-engine-label">Local Sandbox Runtime</span>
+              </div>
+              <pre id="benchOutputText" class="bench-pre">Select a capability above and click "Test Safe Run" or "Simulate Threat Block" to inspect live guardrail responses.</pre>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 3: SAFETY CONTROLS SUMMARY -->
+        <section class="canvas-section">
+          <div class="section-title-bar">
+            <h2 class="section-title">Active Guardrails</h2>
+          </div>
+          <div class="guardrails-row">
+            <div class="guardrail-chip">
+              <span class="chip-check">✔</span>
+              <span>Path Traversal Blocker (<code>../</code>, system roots)</span>
+            </div>
+            <div class="guardrail-chip">
+              <span class="chip-check">✔</span>
+              <span>Destructive Action Confirmation Gate</span>
+            </div>
+            <div class="guardrail-chip">
+              <span class="chip-check">✔</span>
+              <span>Deterministic Dry-Run Simulation</span>
+            </div>
+            <div class="guardrail-chip">
+              <span class="chip-check">✔</span>
+              <span>30-Second Execution Timeout</span>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <!-- RIGHT INSPECTOR: 1-CLICK EXPORT & INTEGRATION -->
+    <aside class="inspector">
+      <div class="inspector-header">
+        <h2 class="inspector-title">Deploy Skill</h2>
+        <span class="inspector-sub">Ready-to-use packages</span>
+      </div>
+
+      <div class="inspector-scroll-body">
+        
+        <!-- Quick Download Bundle Button -->
+        <div class="inspector-quick-actions">
+          <button id="copyBareMdQuickBtn" class="btn-quick-md">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <span class="quick-md-label">Copy Bare .md</span>
+          </button>
+          <button id="downloadBundleBtn" class="btn-download-bundle">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span>Download .zip</span>
+          </button>
+        </div>
+
+        <div class="export-cards-list">
+          <!-- Card 1: Claude Desktop (MCP) -->
+          <div class="export-card">
+            <div class="export-card-top">
+              <div class="export-target-info">
+                <span class="target-name">Claude Desktop & Cursor</span>
+                <span class="target-format">Model Context Protocol (MCP)</span>
+              </div>
+              <button class="btn-copy-card" data-copy="mcp">Copy Config</button>
+            </div>
+            <div class="export-code-snippet">
+              <code id="mcpConfigSnippet">"mcpServers": { ... }</code>
+            </div>
+          </div>
+
+          <!-- Card 2: Cursor & Windsurf Rules -->
+          <div class="export-card">
+            <div class="export-card-top">
+              <div class="export-target-info">
+                <span class="target-name">Cursor & Windsurf</span>
+                <span class="target-format">.cursorrules file</span>
+              </div>
+              <button class="btn-copy-card" data-copy="cursor">Copy Rules</button>
+            </div>
+            <div class="export-code-snippet">
+              <code id="cursorRulesSnippet"># Agent Rules for ...</code>
+            </div>
+          </div>
+
+          <!-- Card 3: Google Antigravity -->
+          <div class="export-card">
+            <div class="export-card-top">
+              <div class="export-target-info">
+                <span class="target-name">Google Antigravity</span>
+                <span class="target-format">SKILL.md package</span>
+              </div>
+              <button class="btn-copy-card" data-copy="antigravity">Copy SKILL.md</button>
+            </div>
+            <div class="export-code-snippet">
+              <code id="antigravitySnippet">--- name: ... ---</code>
+            </div>
+          </div>
+
+          <!-- Card 4: OpenAI API -->
+          <div class="export-card">
+            <div class="export-card-top">
+              <div class="export-target-info">
+                <span class="target-name">OpenAI Function Calling</span>
+                <span class="target-format">tools.json array</span>
+              </div>
+              <button class="btn-copy-card" data-copy="openai">Copy JSON</button>
+            </div>
+            <div class="export-code-snippet">
+              <code id="openaiSnippet">"tools": [ { "type": "function" ... } ]</code>
+            </div>
+          </div>
+        </div>
+
+        <!-- Raw Developer Inspector (Collapsible) -->
+        <details class="developer-details">
+          <summary class="dev-summary">
+            <span>View Developer AST & Raw IR</span>
+          </summary>
+          <pre id="developerRawIr" class="dev-ir-pre"></pre>
+        </details>
+
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- MODAL: CREATE CUSTOM SKILL -->
+  <div id="createModalOverlay" class="modal-backdrop" style="display: none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">Create Custom Skill</h3>
+          <p class="modal-sub">Describe what your AI assistant should do in plain English.</p>
+        </div>
+        <button id="closeCreateModalBtn" class="modal-close">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Inspiration Chips -->
+        <div class="inspiration-chips-row">
+          <span class="chips-title">Inspirations:</span>
+          <button class="chip-item" data-prompt="UI/UX design reviewer that audits layouts against Apple HIG, checks WCAG color contrast, and suggests semantic layout refinements.">🎨 UI/UX Design & HIG Reviewer</button>
+          <button class="chip-item" data-prompt="Security auditor that scans repositories for leaked API secrets, insecure JWT configurations, and unvalidated redirects.">🛡️ Security & Secret Scanner</button>
+          <button class="chip-item" data-prompt="Database query optimizer that analyzes slow SQL queries, detects missing indexes, and suggests composite indexes.">📊 SQL Query Optimizer</button>
+          <button class="chip-item" data-prompt="Technical writer that audits API documentation, enforces sentence-case headings, and formats code diffs.">✍️ Technical Docs Writer</button>
+        </div>
+
+        <div class="form-group">
+          <label for="modalPromptInput" class="form-label">Skill Goal & Directives:</label>
+          <textarea id="modalPromptInput" class="form-textarea" placeholder="E.g. A UI/UX design auditor that checks contrast, verifies 44pt touch targets against Apple HIG, and creates structured critique reports..."></textarea>
+        </div>
+
+        <!-- Engine & BYOK Settings -->
+        <div class="engine-row">
+          <div class="engine-select-wrap">
+            <label for="modalEngineSelect" class="form-label-mini">Synthesizer Engine:</label>
+            <select id="modalEngineSelect" class="form-select">
+              <option value="builtin">Built-in Semantic Synthesizer (Offline, $0, No Keys)</option>
+              <option value="gemini">Google Gemini (BYOK)</option>
+              <option value="openai">OpenAI GPT-4o (BYOK)</option>
+              <option value="ollama">Local Ollama (localhost:11434)</option>
+            </select>
+          </div>
+          <div id="modalApiKeyGroup" class="engine-key-wrap" style="display: none;">
+            <label for="modalApiKeyInput" class="form-label-mini">API Key:</label>
+            <input type="password" id="modalApiKeyInput" class="form-input" placeholder="Paste API Key...">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="cancelModalBtn" class="btn-dialog secondary">Cancel</button>
+        <button id="generateSkillSubmitBtn" class="btn-dialog primary">
+          <span>Synthesize Skill</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
