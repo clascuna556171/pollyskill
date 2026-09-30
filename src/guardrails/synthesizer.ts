@@ -1,10 +1,12 @@
 import { GuardrailPolicy, SkillTool, ToolRiskLevel } from '../ir/types.js';
 import { SecurityAuditResult, SecurityFinding } from './types.js';
+import { NetworkGuardrail } from './network.js';
 
 export const DEFAULT_GUARDRAIL_POLICY: GuardrailPolicy = {
   enablePathTraversalProtection: true,
   enableDestructiveConfirmation: true,
   enableDryRunDefault: true,
+  enableSSRFProtection: true,
   defaultTimeoutSeconds: 30,
   blockedShellCommands: [
     'rm -rf',
@@ -117,6 +119,20 @@ export class GuardrailSynthesizer {
             penalty += 10;
           }
         }
+
+        // Rule 4: Network URL / Endpoint parameters without SSRF guard
+        if (lowerProp.includes('url') || lowerProp.includes('endpoint') || lowerProp.includes('webhook') || lowerProp.includes('uri')) {
+          if (policy.enableSSRFProtection && (!tool.guardrails?.blockPrivateNetworks && (!tool.guardrails?.allowedDomains || tool.guardrails.allowedDomains.length === 0))) {
+            findings.push({
+              severity: 'medium',
+              rule: 'UNCONSTRAINED_NETWORK_URL_INPUT',
+              toolId: tool.id,
+              message: `Parameter '${propName}' accepts network URLs without SSRF or private network filtering.`,
+              remediation: `Enable blockPrivateNetworks = true and configure allowedDomains whitelist.`
+            });
+            penalty += 10;
+          }
+        }
       }
     }
 
@@ -168,11 +184,16 @@ export class GuardrailSynthesizer {
         }
       }
 
-      // Check for path parameters and inject boundary checks
+      // Check for path and network parameters and inject boundary checks
       for (const [propName] of Object.entries(hardened.parameters.properties)) {
         const lowerProp = propName.toLowerCase();
         if (lowerProp.includes('path') || lowerProp.includes('file') || lowerProp.includes('dir')) {
           hardened.guardrails.restrictedPaths = hardened.guardrails.restrictedPaths || ['./', '.'];
+        }
+        if (lowerProp.includes('url') || lowerProp.includes('endpoint') || lowerProp.includes('webhook') || lowerProp.includes('uri')) {
+          if (policy.enableSSRFProtection) {
+            hardened.guardrails.blockPrivateNetworks = true;
+          }
         }
       }
 
@@ -206,6 +227,14 @@ export function validateToolExecution(toolName, args, guardrails = {}) {
   if (guardrails.requireConfirmation && args.confirm !== true) {
     if (args.dryRun !== true) {
       throw new Error(\`[CONFIRMATION_REQUIRED] Tool '\${toolName}' is destructive. You must pass { confirm: true } or { dryRun: true } to proceed.\`);
+    }
+  }
+
+  // 3. Network SSRF and cloud metadata guard
+  const prohibitedNetworkRegex = /(\\b169\\.254\\.\\d{1,3}\\.\\d{1,3}\\b|\\b127\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b|localhost\\b|0\\.0\\.0\\.0\\b|\\[::1\\]|metadata\\.google\\.internal|instance-data|(^|https?:\\/\\/)10\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|(^|https?:\\/\\/)172\\.(1[6-9]|2[0-9]|3[0-1])\\.\\d{1,3}\\.\\d{1,3}|(^|https?:\\/\\/)192\\.168\\.\\d{1,3}\\.\\d{1,3})/i;
+  for (const [key, value] of Object.entries(args || {})) {
+    if (typeof value === 'string' && prohibitedNetworkRegex.test(value)) {
+      throw new Error(\`[GUARDRAIL_VIOLATION] Argument '\${key}' violates network SSRF boundary (targets internal/metadata endpoint): '\${value}'\`);
     }
   }
 

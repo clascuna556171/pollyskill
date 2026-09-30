@@ -6,6 +6,7 @@ export * from './parsers/script.js';
 export * from './parsers/manifest.js';
 export * from './guardrails/types.js';
 export * from './guardrails/synthesizer.js';
+export * from './guardrails/network.js';
 export * from './generators/index.js';
 export * from './generators/antigravity.js';
 export * from './generators/mcp.js';

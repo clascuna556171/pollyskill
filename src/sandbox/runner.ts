@@ -1,4 +1,5 @@
 import { SkillIR, SkillTool } from '../ir/types.js';
+import { NetworkGuardrail } from '../guardrails/network.js';
 
 export interface SandboxExecutionResult {
   success: boolean;
@@ -50,6 +51,19 @@ export class SandboxRunner {
             args,
             guardrailBlocked: true,
             blockReason: `[GUARDRAIL_VIOLATION] Argument '${key}' contains forbidden shell execution characters: '${val}'`,
+            durationMs: performance.now() - start
+          };
+        }
+
+        // SSRF & Cloud Metadata Guard
+        const networkCheck = NetworkGuardrail.evaluateTarget(val);
+        if (networkCheck.blocked) {
+          return {
+            success: false,
+            toolName,
+            args,
+            guardrailBlocked: true,
+            blockReason: `[GUARDRAIL_VIOLATION] Argument '${key}' violates network SSRF boundary: ${networkCheck.reason}`,
             durationMs: performance.now() - start
           };
         }
@@ -107,6 +121,7 @@ export class SandboxRunner {
       toolName,
       args,
       output,
+      guardrailBlocked: false,
       durationMs: Math.round((performance.now() - start) * 100) / 100
     };
   }

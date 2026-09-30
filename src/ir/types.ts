@@ -48,6 +48,7 @@ export interface SkillTool {
     requireConfirmation?: boolean;
     restrictedPaths?: string[];
     allowedDomains?: string[];
+    blockPrivateNetworks?: boolean;
     timeoutSeconds?: number;
     forbiddenPatterns?: string[];
   };
@@ -57,10 +58,12 @@ export interface GuardrailPolicy {
   enablePathTraversalProtection: boolean;
   enableDestructiveConfirmation: boolean;
   enableDryRunDefault: boolean;
+  enableSSRFProtection?: boolean;
   defaultTimeoutSeconds: number;
   blockedShellCommands: string[];
   allowedFileExtensions: string[];
   sanitizationRegexes: { pattern: string; reason: string }[];
+  blockedNetworkPatterns?: string[];
 }
 
 export interface SkillExample {
