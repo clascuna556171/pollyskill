@@ -120,7 +120,7 @@ export interface SkillIR {
   };
 }
 
-export type CompilerTarget = 'antigravity' | 'mcp' | 'cursor' | 'openai' | 'all';
+export type CompilerTarget = 'antigravity' | 'mcp' | 'mcp-sse' | 'cursor' | 'openai' | 'all';
 
 export interface CompilationResult {
   ir: SkillIR;

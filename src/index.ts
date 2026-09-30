@@ -10,6 +10,7 @@ export * from './guardrails/network.js';
 export * from './generators/index.js';
 export * from './generators/antigravity.js';
 export * from './generators/mcp.js';
+export * from './generators/mcp-sse.js';
 export * from './generators/cursor.js';
 export * from './generators/openai.js';
 export * from './sandbox/runner.js';

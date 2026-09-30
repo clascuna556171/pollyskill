@@ -1,6 +1,7 @@
 import { SkillIR, CompilerTarget } from '../ir/types.js';
 import { AntigravityGenerator } from './antigravity.js';
 import { MCPGenerator } from './mcp.js';
+import { MCPSSEGenerator } from './mcp-sse.js';
 import { CursorGenerator } from './cursor.js';
 import { OpenAIGenerator } from './openai.js';
 
@@ -15,6 +16,10 @@ export class TargetEmissions {
 
     if (shouldEmitAll || targets.includes('mcp')) {
       Object.assign(files, MCPGenerator.generate(ir));
+    }
+
+    if (shouldEmitAll || targets.includes('mcp-sse') || targets.includes('mcp')) {
+      Object.assign(files, MCPSSEGenerator.generate(ir));
     }
 
     if (shouldEmitAll || targets.includes('cursor')) {
