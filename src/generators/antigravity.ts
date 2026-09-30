@@ -130,7 +130,7 @@ console.log(JSON.stringify({
 - **Safety Score**: ${ir.metadata.safetyScore}/100
 
 ## Environment Variables
-${ir.envRequirements.length > 0 ? ir.envRequirements.map(env => `- \`${env.name}\` (${env.required ? 'Required' : 'Optional'}): ${env.description}`).join('\n') : '*No custom environment variables required.*'}
+${(ir.envRequirements && ir.envRequirements.length > 0) ? ir.envRequirements.map(env => `- \`${env.name}\` (${env.required ? 'Required' : 'Optional'}): ${env.description}`).join('\n') : '*No custom environment variables required.*'}
 
 ## Tool Manifest
 | Tool Name | Risk Level | Method/Type | Parameters |

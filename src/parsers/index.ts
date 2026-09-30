@@ -2,6 +2,7 @@ import { SkillIR } from '../ir/types.js';
 import { OpenAPIParser } from './openapi.js';
 import { ScriptParser } from './script.js';
 import { ManifestParser } from './manifest.js';
+import { BashParser } from './bash.js';
 
 export class UniversalParser {
   /**
@@ -12,12 +13,17 @@ export class UniversalParser {
     const trimmed = content.trim();
     const ext = filename ? filename.slice(filename.lastIndexOf('.')).toLowerCase() : '';
 
-    // 1. Python source
+    // 1. Bash / Shell script source
+    if (ext === '.sh' || ext === '.bash' || trimmed.startsWith('#!/bin/bash') || trimmed.startsWith('#!/bin/sh') || trimmed.startsWith('#!/usr/bin/env bash')) {
+      return BashParser.parse(content, filename || 'script.sh');
+    }
+
+    // 2. Python source
     if (ext === '.py' || (trimmed.includes('def ') && (trimmed.includes('import ') || trimmed.includes('print(') || trimmed.includes(':')))) {
       return ScriptParser.parsePython(content, filename || 'script.py');
     }
 
-    // 2. TypeScript / JavaScript source
+    // 3. TypeScript / JavaScript source
     if (ext === '.ts' || ext === '.js' || (trimmed.includes('export function') || trimmed.includes('export const'))) {
       return ScriptParser.parseTypeScript(content, filename || 'script.ts');
     }

@@ -3,6 +3,7 @@ export * from './ir/validator.js';
 export * from './parsers/index.js';
 export * from './parsers/openapi.js';
 export * from './parsers/script.js';
+export * from './parsers/bash.js';
 export * from './parsers/manifest.js';
 export * from './guardrails/types.js';
 export * from './guardrails/synthesizer.js';
