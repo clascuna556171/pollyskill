@@ -21,3 +21,4 @@ export * from './parsers/natural.js';
 export * from './install/types.js';
 export * from './install/detector.js';
 export * from './install/installer.js';
+export * from './benchmark/runner.js';

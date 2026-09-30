@@ -11,6 +11,7 @@ import { CompilerTarget } from '../ir/types.js';
 import { startWebServer } from '../ui/server.js';
 import { SkillInstaller } from '../install/installer.js';
 import { InstallTarget, InstallScope } from '../install/types.js';
+import { BenchmarkRunner } from '../benchmark/runner.js';
 
 const program = new Command();
 
@@ -345,6 +346,50 @@ program
       console.log(`  • Safety Score: ${compilation.auditReport.safetyScore >= 80 ? pc.green(pc.bold(`${compilation.auditReport.safetyScore}/100`)) : pc.yellow(pc.bold(`${compilation.auditReport.safetyScore}/100`))}\n`);
     } catch (err: unknown) {
       console.error(pc.red(`\n[INSTALLATION FAILED] ${err instanceof Error ? err.message : String(err)}\n`));
+      process.exit(1);
+    }
+  });
+
+// Command: benchmark (High-resolution latency & telemetry profiler)
+program
+  .command('benchmark')
+  .description('Run high-resolution compiler telemetry and compare performance against LLM prompt roundtrips')
+  .option('-i, --iterations <count>', 'Number of iterations per fixture', '5')
+  .action((options: { iterations: string }) => {
+    try {
+      const iters = parseInt(options.iterations, 10) || 5;
+      console.log(pc.cyan(`\n⚡ PolySkill High-Resolution Compiler Benchmark`));
+      console.log(pc.gray(`   Iterations: ${pc.white(String(iters))} runs per fixture`));
+      console.log(pc.gray(`   Profiling:  AST Lexing, IR Validation, Audit, Synthesis, Codegen\n`));
+
+      const report = BenchmarkRunner.run(iters);
+
+      console.log(pc.bold('Execution Telemetry Matrix:'));
+      console.log(pc.gray('------------------------------------------------------------------------------------------------'));
+      console.log(`${pc.bold('Fixture'.padEnd(24))} | ${pc.bold('Type'.padEnd(10))} | ${pc.bold('Tools'.padEnd(6))} | ${pc.bold('Files'.padEnd(6))} | ${pc.bold('Parse'.padEnd(8))} | ${pc.bold('Audit'.padEnd(8))} | ${pc.bold('Codegen'.padEnd(8))} | ${pc.bold('Total')}`);
+      console.log(pc.gray('------------------------------------------------------------------------------------------------'));
+
+      for (const item of report.results) {
+        const fixName = item.fixture.padEnd(24);
+        const typeStr = item.sourceType.padEnd(10);
+        const toolsStr = String(item.toolsExtracted).padEnd(6);
+        const filesStr = String(item.artifactsEmitted).padEnd(6);
+        const parseStr = `${item.timing.parseMs}ms`.padEnd(8);
+        const auditStr = `${item.timing.auditMs}ms`.padEnd(8);
+        const codegenStr = `${item.timing.codegenMs}ms`.padEnd(8);
+        const totalStr = pc.bold(pc.green(`${item.timing.totalMs}ms`));
+
+        console.log(`${pc.white(fixName)} | ${pc.magenta(typeStr)} | ${pc.yellow(toolsStr)} | ${pc.cyan(filesStr)} | ${pc.gray(parseStr)} | ${pc.gray(auditStr)} | ${pc.gray(codegenStr)} | ${totalStr}`);
+      }
+      console.log(pc.gray('------------------------------------------------------------------------------------------------\n'));
+
+      console.log(pc.bold('Performance & Economic Metrics:'));
+      console.log(`  • Average Compilation Latency: ${pc.bold(pc.green(`${report.overallAverageMs} ms`))}`);
+      console.log(`  • Compiler Throughput:         ${pc.bold(pc.cyan(`${report.compilationsPerSecond} compiles/sec`))}`);
+      console.log(`  • Zero-Cost Cloud Advantage:   ${pc.bold(pc.green('$0 (100% offline, zero API tokens)'))}`);
+      console.log(`  • LLM Comparison Speedup:     ${pc.bold(pc.yellow(`${report.llmComparisonSpeedup}x faster`))} than cloud LLM prompting (~3500ms)\n`);
+    } catch (err: unknown) {
+      console.error(pc.red(`\n[BENCHMARK ERROR] ${err instanceof Error ? err.message : String(err)}\n`));
       process.exit(1);
     }
   });
