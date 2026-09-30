@@ -3,10 +3,11 @@
 > **The Universal Static Compiler for Agent Skills.**  
 > Parse any local Python script, CLI tool, OpenAPI specification, or business runbook and compile it into zero-dependency, sandboxed skill packages targeting **Google Antigravity**, **Model Context Protocol (MCP)**, **Cursor / Windsurf**, and **OpenAI Function Calling**.
 
-[![Tests](https://img.shields.io/badge/tests-13%2F13%20passing-10b981.svg)](#testing--verification)
+[![Tests](https://img.shields.io/badge/tests-34%2F34%20passing-10b981.svg)](#testing--verification)
+[![CI Matrix](https://img.shields.io/badge/CI-Ubuntu%20|%20macOS%20|%20Windows-blue.svg)](.github/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Zero-Cost](https://img.shields.io/badge/cost-$0%20local-a855f7.svg)](#zero-cost-infrastructure)
-[![Target Runtimes](https://img.shields.io/badge/targets-Antigravity%20|%20MCP%20|%20Cursor%20|%20OpenAI-0284c7.svg)](#multi-target-matrix)
+[![Target Runtimes](https://img.shields.io/badge/targets-Antigravity%20|%20MCP%20stdio%2Fsse%20|%20Cursor%20|%20OpenAI-0284c7.svg)](#multi-target-matrix)
 
 ---
 
@@ -169,6 +170,22 @@ node bin/polyskill.js test examples/cloud-sre.yaml \
   --args '{"cluster_name":"prod","service_name":"auth","dryRun":true}'
 ```
 
+#### 1-Click Install to Local Agent Apps
+Directly mount compiled skills into Google Antigravity, Claude Desktop, and Cursor rules:
+```bash
+# 1-click mounting to global Antigravity & Claude Desktop config
+node bin/polyskill.js install examples/billing-ops.py
+
+# Test mounting in dry-run mode
+node bin/polyskill.js install examples/billing-ops.py --dry-run
+```
+
+#### Run High-Resolution Telemetry Benchmark
+Profile compiler pipeline phases and calculate speedup vs cloud LLM roundtrips:
+```bash
+node bin/polyskill.js benchmark --iterations 5
+```
+
 #### Launch the Visual Web Studio
 Launch the local visual playground:
 ```bash
@@ -195,8 +212,9 @@ PolySkill injects security barriers directly into emitted code:
 
 | Guardrail | Mechanism | Violation Action |
 |---|---|---|
-| **Path Traversal Protection** | Regex regex-scans all string parameters for `../`, `..\`, `/etc`, Windows roots | Immediate runtime abort (`GUARDRAIL_BLOCKED`) |
-| **Destructive Mutation Gate** | Detects `drop`, `delete`, `purge`, `truncate` keywords in tool names and descriptions | Requires explicit `confirm: true` or `dryRun: true` |
+| **Path Traversal Protection** | Regex-scans all string parameters for `../`, `..\`, `/etc`, Windows roots | Immediate runtime abort (`GUARDRAIL_BLOCKED`) |
+| **SSRF & Cloud Metadata Shield** | Blocks AWS/GCP IMDS (`169.254.169.254`), loopbacks (`127.0.0.1`), and RFC 1918 private IPs | Immediate runtime abort (`GUARDRAIL_BLOCKED`) |
+| **Destructive Mutation Gate** | Detects `drop`, `delete`, `purge`, `truncate`, `kill` in tool names and descriptions | Requires explicit `confirm: true` or `dryRun: true` |
 | **Dry-Run Auto-Injection** | Synthesizes a `dryRun: boolean` parameter into every non-read-only tool | Simulates execution with 0 state mutations |
 | **Command Injection Guard** | Blocks shell separators (`;`, `|`, `&&`, backticks, `$()`) in path/string arguments | Intercepted before shell invocation |
 | **Timeout Bounds** | Enforces a strict default 30s execution ceiling | SIGTERM / process abort |

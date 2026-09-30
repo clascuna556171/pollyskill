@@ -1,0 +1,42 @@
+name: CI / Build & Multi-Platform Matrix
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-matrix:
+    name: Test Node ${{ matrix.node-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        node-version: [ 18.x, 20.x, 22.x ]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Compile TypeScript
+        run: npm run build
+
+      - name: Run Test Suite
+        run: npm test
+
+      - name: Verify CLI Smoke Test & Compilation
+        run: |
+          node bin/polyskill.js inspect examples/billing-ops.py
+          node bin/polyskill.js compile examples/stripe-billing.json -o ./dist-ci
+          node bin/polyskill.js benchmark --iterations 2
