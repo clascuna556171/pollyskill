@@ -10,7 +10,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/cli/index.ts",
-    "test": "tsx --test tests/**/*.test.ts",
+    "test": "node scripts/run-tests.mjs",
     "ui": "tsx src/cli/index.ts ui",
     "inspect": "tsx src/cli/index.ts inspect",
     "compile": "tsx src/cli/index.ts compile"
