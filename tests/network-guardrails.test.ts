@@ -67,7 +67,9 @@ describe('Network & SSRF Guardrails Test Suite', () => {
       displayName: 'Webhook Caller',
       description: 'Dispatches webhooks',
       version: '1.0.0',
+      schemaVersion: '1.0.0',
       category: 'developer_tool',
+      systemPrompt: 'You have access to webhook tools.',
       triggerPhrases: ['call webhook'],
       workflowInstructions: 'Call the webhook URL',
       tools: [
@@ -87,6 +89,7 @@ describe('Network & SSRF Guardrails Test Suite', () => {
           guardrails: { blockPrivateNetworks: true }
         }
       ],
+      envRequirements: [],
       examples: [],
       guardrails: {
         enablePathTraversalProtection: true,
@@ -99,9 +102,10 @@ describe('Network & SSRF Guardrails Test Suite', () => {
         sanitizationRegexes: []
       },
       metadata: {
-        sourceType: 'script',
-        generatedAt: new Date().toISOString(),
-        compilerVersion: '1.0.0'
+        sourceType: 'manual',
+        compiledAt: new Date().toISOString(),
+        compilerVersion: '1.0.0',
+        safetyScore: 90
       }
     };
 
