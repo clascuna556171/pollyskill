@@ -9,6 +9,8 @@ import { UniversalParser } from '../parsers/index.js';
 import { GuardrailSynthesizer } from '../guardrails/synthesizer.js';
 import { CompilerTarget } from '../ir/types.js';
 import { startWebServer } from '../ui/server.js';
+import { SkillInstaller } from '../install/installer.js';
+import { InstallTarget, InstallScope } from '../install/types.js';
 
 const program = new Command();
 
@@ -268,6 +270,81 @@ program
       }
     } catch (err: unknown) {
       console.error(err instanceof Error ? err.message : String(err));
+      process.exit(1);
+    }
+  });
+
+// Command: install (Direct 1-click mounting to Antigravity, MCP, and Cursor)
+program
+  .command('install')
+  .description('Compile and directly mount a skill into local agent environments (Antigravity, Claude Desktop MCP, Cursor)')
+  .argument('<source>', 'Path to source file or manifest')
+  .option('-t, --targets <targets>', 'Comma-separated target list (antigravity, mcp, cursor, all)', 'all')
+  .option('-s, --scope <scope>', 'Antigravity scope (global or workspace)', 'global')
+  .option('--claude-config <path>', 'Custom path to claude_desktop_config.json')
+  .option('--dry-run', 'Simulate mounting without writing files or modifying configs')
+  .option('--no-harden', 'Disable automated guardrail synthesis')
+  .action((sourcePath: string, options: { targets: string; scope: string; claudeConfig?: string; dryRun?: boolean; harden?: boolean }) => {
+    try {
+      const resolvedPath = path.resolve(process.cwd(), sourcePath);
+      if (!fs.existsSync(resolvedPath)) {
+        console.error(pc.red(`\n[ERROR] Source file not found: ${resolvedPath}`));
+        process.exit(1);
+      }
+
+      const content = fs.readFileSync(resolvedPath, 'utf-8');
+      const filename = path.basename(resolvedPath);
+      const targets = options.targets.split(',').map(t => t.trim()) as InstallTarget[];
+      const isDry = options.dryRun === true;
+
+      console.log(pc.cyan(`\n⚡ PolySkill Agent Skill Installer`));
+      console.log(pc.gray(`   Source:  ${pc.white(filename)}`));
+      console.log(pc.gray(`   Targets: ${pc.white(targets.join(', '))}`));
+      console.log(pc.gray(`   Scope:   ${pc.magenta(options.scope)}`));
+      if (isDry) {
+        console.log(pc.yellow(`   Mode:    DRY RUN (Simulated, no files modified)`));
+      }
+      console.log();
+
+      const startTime = performance.now();
+      const compilation = PolySkillCompiler.compile(content, {
+        filename,
+        targets: ['all'],
+        hardenGuardrails: options.harden !== false
+      });
+
+      const installResult = SkillInstaller.install(compilation, {
+        targets,
+        scope: options.scope as InstallScope,
+        claudeConfigPath: options.claudeConfig,
+        dryRun: isDry
+      });
+
+      const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
+
+      for (const item of installResult.installedItems) {
+        const badge = item.status === 'simulated'
+          ? pc.yellow(`  [SIMULATED]`)
+          : (item.status === 'updated' ? pc.cyan(`  ✔ [UPDATED]`) : pc.green(`  ✔ [MOUNTED]`));
+        console.log(`${badge} ${pc.bold(item.target.toUpperCase())}: ${pc.white(item.path)}`);
+        if (item.details) {
+          console.log(pc.gray(`      ${item.details}`));
+        }
+      }
+
+      if (installResult.warnings.length > 0) {
+        console.log(pc.yellow('\nWarnings:'));
+        for (const w of installResult.warnings) {
+          console.log(pc.yellow(`  ⚠️  ${w}`));
+        }
+      }
+
+      console.log(`\n${pc.bold('Installation Summary:')}`);
+      console.log(`  • Skill Name:   ${pc.bold(pc.magenta(compilation.ir.displayName))} (${pc.gray(compilation.ir.name)})`);
+      console.log(`  • Mounted:      ${pc.bold(String(installResult.installedItems.length))} targets in ${elapsed}s`);
+      console.log(`  • Safety Score: ${compilation.auditReport.safetyScore >= 80 ? pc.green(pc.bold(`${compilation.auditReport.safetyScore}/100`)) : pc.yellow(pc.bold(`${compilation.auditReport.safetyScore}/100`))}\n`);
+    } catch (err: unknown) {
+      console.error(pc.red(`\n[INSTALLATION FAILED] ${err instanceof Error ? err.message : String(err)}\n`));
       process.exit(1);
     }
   });

@@ -15,3 +15,6 @@ export * from './sandbox/runner.js';
 export * from './compiler.js';
 
 export * from './parsers/natural.js';
+export * from './install/types.js';
+export * from './install/detector.js';
+export * from './install/installer.js';
