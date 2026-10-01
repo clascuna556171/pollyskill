@@ -49,6 +49,8 @@ export interface SkillTool {
     restrictedPaths?: string[];
     allowedDomains?: string[];
     blockPrivateNetworks?: boolean;
+    blockCredentialLeak?: boolean;
+    redactCredentialOutput?: boolean;
     timeoutSeconds?: number;
     forbiddenPatterns?: string[];
   };
@@ -59,6 +61,7 @@ export interface GuardrailPolicy {
   enableDestructiveConfirmation: boolean;
   enableDryRunDefault: boolean;
   enableSSRFProtection?: boolean;
+  enableCredentialProtection?: boolean;
   defaultTimeoutSeconds: number;
   blockedShellCommands: string[];
   allowedFileExtensions: string[];

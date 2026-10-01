@@ -1,12 +1,14 @@
 import { GuardrailPolicy, SkillTool, ToolRiskLevel } from '../ir/types.js';
 import { SecurityAuditResult, SecurityFinding } from './types.js';
 import { NetworkGuardrail } from './network.js';
+import { CredentialGuardrail } from './credential.js';
 
 export const DEFAULT_GUARDRAIL_POLICY: GuardrailPolicy = {
   enablePathTraversalProtection: true,
   enableDestructiveConfirmation: true,
   enableDryRunDefault: true,
   enableSSRFProtection: true,
+  enableCredentialProtection: true,
   defaultTimeoutSeconds: 30,
   blockedShellCommands: [
     'rm -rf',
@@ -133,6 +135,27 @@ export class GuardrailSynthesizer {
             penalty += 10;
           }
         }
+
+        // Rule 5: Credential / Secret parameters without leak shield
+        if (
+          lowerProp.includes('key') ||
+          lowerProp.includes('token') ||
+          lowerProp.includes('secret') ||
+          lowerProp.includes('password') ||
+          lowerProp.includes('credential') ||
+          lowerProp.includes('auth')
+        ) {
+          if (policy.enableCredentialProtection && !tool.guardrails?.blockCredentialLeak) {
+            findings.push({
+              severity: 'high',
+              rule: 'UNPROTECTED_CREDENTIAL_PARAMETER',
+              toolId: tool.id,
+              message: `Parameter '${propName}' accepts credentials or secrets without automated ingress blocking and egress redaction shields.`,
+              remediation: `Enable blockCredentialLeak = true and redactCredentialOutput = true to prevent agent exfiltration.`
+            });
+            penalty += 20;
+          }
+        }
       }
     }
 
@@ -159,6 +182,11 @@ export class GuardrailSynthesizer {
 
       hardened.guardrails = hardened.guardrails || {};
       hardened.guardrails.timeoutSeconds = hardened.guardrails.timeoutSeconds || policy.defaultTimeoutSeconds;
+
+      if (policy.enableCredentialProtection !== false) {
+        hardened.guardrails.blockCredentialLeak = true;
+        hardened.guardrails.redactCredentialOutput = true;
+      }
 
       if (isDestructive || hardened.riskLevel === 'destructive_write') {
         hardened.riskLevel = 'destructive_write';
@@ -235,6 +263,25 @@ export function validateToolExecution(toolName, args, guardrails = {}) {
   for (const [key, value] of Object.entries(args || {})) {
     if (typeof value === 'string' && prohibitedNetworkRegex.test(value)) {
       throw new Error(\`[GUARDRAIL_VIOLATION] Argument '\${key}' violates network SSRF boundary (targets internal/metadata endpoint): '\${value}'\`);
+    }
+  }
+
+  // 4. Credential & Secret Ingress Guard
+  const credentialPatterns = [
+    /\\bAKIA[0-9A-Z]{16}\\b/,
+    /\\b(ghp_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9_]{82})\\b/,
+    /\\bsk-[a-zA-Z0-9]{20,}\\b/,
+    /\\bsk-ant-[a-zA-Z0-9]{20,}\\b/,
+    /-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----/,
+    /\\beyJ[a-zA-Z0-9_-]{10,}\\.eyJ[a-zA-Z0-9_-]{10,}\\.[a-zA-Z0-9_-]{10,}\\b/
+  ];
+  for (const [key, value] of Object.entries(args || {})) {
+    if (typeof value === 'string') {
+      for (const pattern of credentialPatterns) {
+        if (pattern.test(value)) {
+          throw new Error(\`[GUARDRAIL_VIOLATION] Argument '\${key}' contains unauthorized raw credential or secret pattern.\`);
+        }
+      }
     }
   }
 

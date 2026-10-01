@@ -1,5 +1,6 @@
 import { SkillIR, SkillTool } from '../ir/types.js';
 import { NetworkGuardrail } from '../guardrails/network.js';
+import { CredentialGuardrail } from '../guardrails/credential.js';
 
 export interface SandboxExecutionResult {
   success: boolean;
@@ -67,6 +68,19 @@ export class SandboxRunner {
             durationMs: performance.now() - start
           };
         }
+
+        // Credential & Secret Exfiltration Guard
+        const credCheck = CredentialGuardrail.evaluateInput(val);
+        if (credCheck.blocked) {
+          return {
+            success: false,
+            toolName,
+            args,
+            guardrailBlocked: true,
+            blockReason: `[GUARDRAIL_VIOLATION] Argument '${key}' contains raw sensitive credential (${credCheck.matchedType})`,
+            durationMs: performance.now() - start
+          };
+        }
       }
     }
 
@@ -116,11 +130,16 @@ export class SandboxRunner {
       }
     };
 
+    // 5. Output Redaction
+    const sanitizedOutput = tool.guardrails?.redactCredentialOutput !== false
+      ? CredentialGuardrail.redactOutput(output)
+      : output;
+
     return {
       success: true,
       toolName,
       args,
-      output,
+      output: sanitizedOutput,
       guardrailBlocked: false,
       durationMs: Math.round((performance.now() - start) * 100) / 100
     };

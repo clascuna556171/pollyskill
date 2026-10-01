@@ -60,6 +60,7 @@ ${ir.workflowInstructions}
 ## Safety & Guardrails
 - **Path Traversal Protection**: All file path parameters are sandboxed to the project directory. Prohibited patterns (\`..\`, \`/etc\`, system roots) will abort execution immediately.
 - **Destructive Mutation Gate**: Destructive write actions require explicit parameter confirmation (\`confirm: true\`) or dry-run validation (\`dryRun: true\`).
+- **Credential & Secret Protection**: Parameters are deterministically scanned for raw API keys and private credentials; outputs are automatically redacted to prevent exfiltration into LLM context.
 - **Timeout Policy**: Tools will terminate if execution exceeds ${ir.guardrails.defaultTimeoutSeconds} seconds.
 
 ## When to Trigger
@@ -102,9 +103,15 @@ try {
 
 // Runtime Guardrail Validation
 for (const [key, value] of Object.entries(args)) {
-  if (typeof value === 'string' && /\\.\\.[\\\\/]/i.test(value)) {
-    console.error(\`[GUARDRAIL_BLOCKED] Path traversal attempt detected in '\${key}': \${value}\`);
-    exit(2);
+  if (typeof value === 'string') {
+    if (/\\.\\.[\\\\/]/i.test(value)) {
+      console.error(\`[GUARDRAIL_BLOCKED] Path traversal attempt detected in '\${key}': \${value}\`);
+      exit(2);
+    }
+    if (/(\\bAKIA[0-9A-Z]{16}\\b|\\bsk-[a-zA-Z0-9]{20,}\\b|\\bghp_[a-zA-Z0-9]{36}\\b|-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----)/.test(value)) {
+      console.error(\`[GUARDRAIL_BLOCKED] Raw credential or secret detected in '\${key}'\`);
+      exit(2);
+    }
   }
 }
 
