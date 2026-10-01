@@ -3,6 +3,7 @@ import { OpenAPIParser } from './openapi.js';
 import { ScriptParser } from './script.js';
 import { ManifestParser } from './manifest.js';
 import { BashParser } from './bash.js';
+import { TypeScriptParser } from './typescript.js';
 
 export class UniversalParser {
   /**
@@ -25,7 +26,7 @@ export class UniversalParser {
 
     // 3. TypeScript / JavaScript source
     if (ext === '.ts' || ext === '.js' || (trimmed.includes('export function') || trimmed.includes('export const'))) {
-      return ScriptParser.parseTypeScript(content, filename || 'script.ts');
+      return TypeScriptParser.parse(content, filename || 'script.ts');
     }
 
     // 3. JSON or YAML: Check if OpenAPI or SkillSpec
