@@ -59,7 +59,8 @@ Every Fortune 500 company is running internal AI agent pilots. However, **over 8
 - Automatically parses functions for destructive verbs (`drop`, `delete`, `purge`, `truncate`, `kill`).
 - Synthesizes mandatory `confirm: true` gates directly into the tool's parameter schema.
 - Injects a `dryRun: boolean` simulation flag into non-idempotent operations.
-- Synthesizes regex-based path traversal blocks (`../`, `/etc`, `C:\Windows\System32`) and command injection blocks (`;`, `|`, `&&`, backticks).
+- Synthesizes regex-based path traversal blocks (`../`, `/etc`, `C:\Windows\System32`), command injection blocks (`;`, `|`, `&&`), and network SSRF/cloud metadata shields (`169.254.169.254`).
+- Enforces deterministic Credential & PII leak protection: blocks raw API keys/tokens from ingress arguments and auto-redacts sensitive secrets in tool outputs.
 - If an agent is hallucinating or compromised, the compiled code throws a deterministic `GUARDRAIL_BLOCKED` exception before touching the operating system.
 
 ### Reason 2: It Bridges the "Protocol War" (The Babel Moment for AI Agents)
@@ -88,7 +89,7 @@ This shows recruiters that the candidate understands **formal software architect
 
 ### Reason 5: Production Polish & Complete Developer Experience
 - **Strict TypeScript**: 100% type-safe codebase with zero permissive `any` escape hatches.
-- **16/16 Automated Tests Passing**: Comprehensive test suites verifying AST parsers, prompt synthesizers, security sandboxes, and target emitters.
+- **49/49 Automated Tests Passing (across 12 suites)**: Comprehensive test suites verifying AST parsers, prompt synthesizers, security sandboxes, and target emitters.
 - **Full CLI & Visual Web Studio**: Offers both a terminal CLI (`bin/polyskill.js`) and a zero-dependency web interface (`npm run ui`) crafted with Apple/Linear dark-mode aesthetics.
 
 ---
@@ -147,7 +148,7 @@ This shows recruiters that the candidate understands **formal software architect
 
 | Stage | Implementation | Key Engineering Decisions |
 |---|---|---|
-| **1. Static Lexing & AST Parsing** | `src/parsers/` | Tokenizes Python docstrings, type annotations, and argparse definitions using static regular expression state machines. **Strictly avoids `eval()` or child process execution**, eliminating compilation-time attack vectors. |
+| **1. Static Lexing & AST Parsing** | `src/parsers/` | Tokenizes TypeScript interfaces/unions/JSDoc, Python docstrings/argparse, and Bash getopts flags using static regular expression state machines. **Strictly avoids `eval()` or child process execution**, eliminating compilation-time attack vectors. |
 | **2. Universal Skill IR** | `src/ir/` | Standardizes all inputs into a strongly typed `SkillIR` interface conforming to JSON Schema (draft-07), decoupling input dialects from runtime targets. |
 | **3. Safety Audit & Scoring** | `src/guardrails/synthesizer.ts` | Scans for high-risk operations, assigns severity penalties (`MISCLASSIFIED_RISK_LEVEL`, `UNCONSTRAINED_FILE_PATH`), and generates an objective 0–100 Safety Score. |
 | **4. Guardrail Synthesis** | `src/guardrails/synthesizer.ts` | Programmatically mutates the IR: automatically injects `confirm` and `dryRun` schema properties, and injects sandbox path sanitization logic. |
@@ -279,7 +280,7 @@ dist/
 To demonstrate the project live in an interview or portfolio walkthrough:
 
 ```bash
-# 1. Run the comprehensive test suite (16 tests, 5 suites)
+# 1. Run the comprehensive test suite (49 tests, 12 suites)
 npm test
 
 # 2. Compile an example in 40ms to all targets

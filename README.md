@@ -3,7 +3,7 @@
 > **The Universal Static Compiler and Security Synthesizer for AI Agent Skills.**  
 > Transform raw Python scripts, DevOps Bash scripts, OpenAPI specifications, and business runbooks into sandboxed, production-ready skill packages targeting **Google Antigravity**, **Model Context Protocol (MCP stdio & SSE)**, **Cursor / Windsurf**, and **OpenAI / Anthropic Function Calling**.
 
-[![Tests](https://img.shields.io/badge/tests-34%2F34%20passing-10b981.svg)](#-testing--verification)
+[![Tests](https://img.shields.io/badge/tests-49%2F49%20passing-10b981.svg)](#-testing--verification)
 [![CI Matrix](https://img.shields.io/badge/CI-Ubuntu%20|%20macOS%20|%20Windows-blue.svg)](.github/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Zero-Cost](https://img.shields.io/badge/cost-$0%20local-a855f7.svg)](#-zero-cost-local-first-architecture)
@@ -33,9 +33,9 @@
 
 ## 💡 WHAT is PolySkill?
 
-**PolySkill** is the **"LLVM for AI Agent Skills"**. It is a zero-dependency static compiler that ingests existing enterprise code (Python AST, Bash scripts, OpenAPI REST APIs, or plain-English intents) and deterministically compiles them into hardened, sandboxed tools for autonomous agents.
+**PolySkill** is the **"LLVM for AI Agent Skills"**. It is a zero-dependency static compiler that ingests existing enterprise code (Python AST, TypeScript/JSDoc SDKs, DevOps Bash scripts, OpenAPI REST APIs, or plain-English intents) and deterministically compiles them into hardened, sandboxed tools for autonomous agents.
 
-Rather than manually coding custom boilerplate for every AI runtime or trusting non-deterministic LLMs to "behave," PolySkill normalizes tools into a **Universal Skill Intermediate Representation (Skill IR)**, audits security, and **auto-synthesizes hard-coded runtime guardrails** (path traversal blockers, SSRF metadata shields, and destructive confirmation gates) in **~2 milliseconds with $0 cloud cost**.
+Rather than manually coding custom boilerplate for every AI runtime or trusting non-deterministic LLMs to "behave," PolySkill normalizes tools into a **Universal Skill Intermediate Representation (Skill IR)**, audits security, and **auto-synthesizes hard-coded runtime guardrails** (path traversal blockers, SSRF metadata shields, credential exfiltration gates, and destructive confirmation gates) in **~2 milliseconds with $0 cloud cost**.
 
 ---
 
@@ -57,6 +57,7 @@ Over 80% of enterprise agent deployments are blocked by InfoSec and SecOps teams
 - Detects dangerous mutations (`drop`, `delete`, `purge`, `truncate`) and enforces mandatory `confirm: true` or `dryRun: true` flags.
 - Regex-scans parameters to block directory traversal (`../`) and system paths (`/etc`, `C:\Windows\System32`).
 - Blocks Server-Side Request Forgery (SSRF) targeting cloud metadata services (`169.254.169.254`) and private RFC 1918 subnets (`10.0.0.0/8`, `192.168.0.0/16`).
+- Deterministically blocks raw credential exfiltration (AWS keys, OpenAI tokens, GitHub PATs, RSA private keys) in tool arguments, and auto-redacts sensitive secrets in tool outputs before returning to the agent.
 
 ### 3. $0 Local-First Economics vs Cloud LLM Latency
 Why burn paid LLM tokens translating scripts at runtime when a static compiler can parse, validate, harden, and emit production-grade tools in **2 milliseconds**? PolySkill runs 100% locally with zero cloud dependencies.
@@ -69,6 +70,7 @@ Why burn paid LLM tokens translating scripts at runtime when a static compiler c
                          ┌─────────────────────────────────────────────────────────┐
                          │                      INPUT SOURCES                      │
                          │  • Python Scripts (AST, Argparse, TypeHints, Docstrings)│
+                         │  • TypeScript & JS SDKs (AST, Interfaces, Unions, JSDoc)│
                          │  • DevOps Bash Scripts (getopts, case flags, comments)  │
                          │  • OpenAPI v3 / Swagger (JSON & YAML)                   │
                          │  • Declarative SkillSpec Manifests                      │
@@ -98,7 +100,7 @@ Why burn paid LLM tokens translating scripts at runtime when a static compiler c
                          │  • Automated Safety Score Calculator (0 - 100)          │
                          │  • Auto-injects `confirm: boolean` on destructive tools │
                          │  • Auto-injects `dryRun: boolean` simulation flags      │
-                         │  • Enforces path traversal and SSRF boundary guards     │
+                         │  • Enforces path traversal, SSRF & credential shields   │
                          └────────────────────────────┬────────────────────────────┘
                                                       │
                                                       ▼
@@ -263,6 +265,7 @@ PolySkill injects security barriers directly into emitted code:
 |---|---|---|
 | **Path Traversal Protection** | Regex-scans all string parameters for `../`, `..\`, `/etc`, and Windows system roots | Immediate runtime abort (`GUARDRAIL_BLOCKED`) |
 | **SSRF & Metadata Shield** | Blocks AWS/GCP IMDS (`169.254.169.254`), loopbacks (`127.0.0.1`), and RFC 1918 private subnets | Immediate runtime abort (`GUARDRAIL_BLOCKED`) |
+| **Credential & Secret Shield** | Deterministically blocks raw API keys (AWS, OpenAI, GitHub, SSH/RSA) and auto-redacts output data | Ingress blocked (`GUARDRAIL_BLOCKED`) & outputs sanitized |
 | **Destructive Mutation Gate** | Detects `drop`, `delete`, `purge`, `truncate`, `kill` in tool names and descriptions | Requires explicit `confirm: true` or `dryRun: true` |
 | **Dry-Run Auto-Injection** | Synthesizes a `dryRun: boolean` parameter into every non-read-only tool | Simulates execution with 0 state mutations |
 | **Command Injection Guard** | Blocks shell separators (`;`, `|`, `&&`, backticks, `$()`) in path/string arguments | Intercepted before shell invocation |
@@ -342,6 +345,7 @@ npm test
 ▶ Bash / Shell Script Parser Test Suite (4 tests)
 ▶ Compiler Latency Benchmark Test Suite (1 test)
 ▶ PolySkill Compiler End-to-End Suite (2 tests)
+▶ Credential & PII Guardrails Test Suite (11 tests)
 ▶ Guardrail Synthesizer & Audit Test Suite (2 tests)
 ▶ SkillInstaller & ConfigDetector Test Suite (5 tests)
 ▶ MCP SSE Remote Transport Test Suite (2 tests)
@@ -349,8 +353,9 @@ npm test
 ▶ Network & SSRF Guardrails Test Suite (6 tests)
 ▶ PolySkill Parsers Test Suite (4 tests)
 ▶ PolySkill Sandbox & Security Guardrail Suite (5 tests)
+▶ TypeScript / JSDoc AST Parser Test Suite (4 tests)
 
-ℹ tests 34 | pass 34 | fail 0 | suites 10
+ℹ tests 49 | pass 49 | fail 0 | suites 12
 ```
 
 ---
@@ -370,14 +375,16 @@ polyskill/
 │   ├── parsers/
 │   │   ├── index.ts              # Universal parser auto-detector
 │   │   ├── openapi.ts            # OpenAPI v2/v3 JSON & YAML parser
-│   │   ├── script.ts             # Python / TypeScript static AST parser
+│   │   ├── typescript.ts         # TypeScript / JSDoc static AST parser
+│   │   ├── script.ts             # Python static AST parser
 │   │   ├── bash.ts               # DevOps shell script parser
 │   │   ├── natural.ts            # Offline semantic skill synthesizer
 │   │   └── manifest.ts           # Declarative SkillSpec YAML parser
 │   ├── guardrails/
 │   │   ├── types.ts              # Security finding and audit types
 │   │   ├── synthesizer.ts        # Deterministic guardrail synthesizer
-│   │   └── network.ts            # SSRF & cloud metadata egress guard
+│   │   ├── network.ts            # SSRF & cloud metadata egress guard
+│   │   └── credential.ts         # Credential exfiltration & leak guard
 │   ├── generators/
 │   │   ├── index.ts              # Target coordinator
 │   │   ├── antigravity.ts        # Google Antigravity Skill format
@@ -399,11 +406,12 @@ polyskill/
 │       ├── server.ts             # Native zero-dep local HTTP server
 │       └── public/               # Modern visual Web Studio
 ├── examples/
+│   ├── cloud-deploy.ts           # TypeScript SDK fixture
 │   ├── billing-ops.py            # Python CLI fixture
 │   ├── docker-cleanup.sh         # DevOps Bash fixture
 │   ├── stripe-billing.json       # OpenAPI v3 fixture
 │   └── cloud-sre.yaml            # SRE SkillSpec fixture
-├── tests/                        # Comprehensive unit & integration tests (34 tests)
+├── tests/                        # Comprehensive unit & integration tests (49 tests across 12 suites)
 ├── .github/workflows/ci.yml      # Multi-OS GitHub Actions matrix
 ├── AGENTS.md                     # Agent & contributor commit directives
 ├── CONTRIBUTING.md               # Contribution standards and guidelines

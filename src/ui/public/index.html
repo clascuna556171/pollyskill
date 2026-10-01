@@ -69,6 +69,14 @@
               <span class="nav-item-sub">Apple HIG & Contrast</span>
             </div>
           </button>
+
+          <button class="nav-item" data-skill="cloud-deploy">
+            <span class="nav-item-icon">⚡</span>
+            <div class="nav-item-text">
+              <span class="nav-item-title">Cloud Deploy SDK</span>
+              <span class="nav-item-sub">TypeScript / JSDoc</span>
+            </div>
+          </button>
         </div>
       </nav>
 
@@ -144,7 +152,11 @@
                 </button>
                 <button id="benchExploitBtn" class="btn-bench exploit">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                  <span>Simulate Threat Block (../)</span>
+                  <span>Simulate Traversal (../)</span>
+                </button>
+                <button id="benchSecretBtn" class="btn-bench exploit">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  <span>Simulate Credential Leak (sk-...)</span>
                 </button>
               </div>
             </div>
@@ -158,7 +170,7 @@
                 </div>
                 <span class="output-engine-label">Local Sandbox Runtime</span>
               </div>
-              <pre id="benchOutputText" class="bench-pre">Select a capability above and click "Test Safe Run" or "Simulate Threat Block" to inspect live guardrail responses.</pre>
+              <pre id="benchOutputText" class="bench-pre">Select a capability above and click "Test Safe Run" or a simulation button to inspect live guardrail responses.</pre>
             </div>
           </div>
         </section>
@@ -175,6 +187,14 @@
             </div>
             <div class="guardrail-chip">
               <span class="chip-check">✔</span>
+              <span>SSRF & IMDS Shield (<code>169.254.x.x</code>, RFC 1918)</span>
+            </div>
+            <div class="guardrail-chip">
+              <span class="chip-check">✔</span>
+              <span>Credential & Secret Leak Shield (API keys, JWT, SSH)</span>
+            </div>
+            <div class="guardrail-chip">
+              <span class="chip-check">✔</span>
               <span>Destructive Action Confirmation Gate</span>
             </div>
             <div class="guardrail-chip">
@@ -183,7 +203,7 @@
             </div>
             <div class="guardrail-chip">
               <span class="chip-check">✔</span>
-              <span>30-Second Execution Timeout</span>
+              <span>Execution Timeout</span>
             </div>
           </div>
         </section>

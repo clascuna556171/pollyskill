@@ -17,6 +17,7 @@ const capabilitiesGrid = document.getElementById('capabilitiesGrid');
 const benchToolSelect = document.getElementById('benchToolSelect');
 const benchSafeBtn = document.getElementById('benchSafeBtn');
 const benchExploitBtn = document.getElementById('benchExploitBtn');
+const benchSecretBtn = document.getElementById('benchSecretBtn');
 const benchStatusPill = document.getElementById('benchStatusPill');
 const benchLatency = document.getElementById('benchLatency');
 const benchOutputText = document.getElementById('benchOutputText');
@@ -248,19 +249,25 @@ downloadBundleBtn.addEventListener('click', () => {
 });
 
 // 8. Test Bench Execution
-async function runBenchSimulation(isExploit) {
+async function runBenchSimulation(mode) {
   if (!currentCompilation) return;
   const toolName = benchToolSelect.value;
   const tool = currentCompilation.ir.tools.find(t => t.name === toolName);
 
   const args = {};
   for (const [pName, pDef] of Object.entries(tool?.parameters?.properties || {})) {
-    if (pDef.type === 'string') args[pName] = isExploit ? '../../etc/shadow' : `sample_${pName}`;
-    else if (pDef.type === 'integer' || pDef.type === 'number') args[pName] = 100;
-    else if (pDef.type === 'boolean') args[pName] = true;
+    if (pDef.type === 'string') {
+      if (mode === 'traversal') args[pName] = '../../etc/shadow';
+      else if (mode === 'credential') args[pName] = 'sk-live-9876543210abcdefghijklmnopqrstuvwxyz';
+      else args[pName] = `sample_${pName}`;
+    } else if (pDef.type === 'integer' || pDef.type === 'number') {
+      args[pName] = 100;
+    } else if (pDef.type === 'boolean') {
+      args[pName] = true;
+    }
   }
 
-  if (isExploit) {
+  if (mode === 'traversal' || mode === 'credential') {
     args.dryRun = false;
     args.confirm = false;
   } else {
@@ -303,8 +310,9 @@ async function runBenchSimulation(isExploit) {
   }
 }
 
-benchSafeBtn.addEventListener('click', () => runBenchSimulation(false));
-benchExploitBtn.addEventListener('click', () => runBenchSimulation(true));
+benchSafeBtn.addEventListener('click', () => runBenchSimulation('safe'));
+benchExploitBtn.addEventListener('click', () => runBenchSimulation('traversal'));
+if (benchSecretBtn) benchSecretBtn.addEventListener('click', () => runBenchSimulation('credential'));
 
 // 9. Modal Handlers
 openCreateModalBtn.addEventListener('click', () => {
