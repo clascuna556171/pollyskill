@@ -12,6 +12,15 @@ import { startWebServer } from '../ui/server.js';
 import { SkillInstaller } from '../install/installer.js';
 import { InstallTarget, InstallScope } from '../install/types.js';
 import { BenchmarkRunner } from '../benchmark/runner.js';
+import {
+  compileFromWizardPrompt,
+  formatNextSteps,
+  runGuidedWizard,
+  WizardProvider,
+  writeCompilationArtifacts
+} from './wizard.js';
+
+const VALID_PROVIDERS: ReadonlySet<string> = new Set(['builtin', 'gemini', 'openai', 'ollama']);
 
 const program = new Command();
 
@@ -19,6 +28,18 @@ program
   .name('polyskill')
   .description('Universal static compiler for Agent Skills (Google Antigravity, MCP, Cursor, OpenAI)')
   .version('1.0.0');
+
+program.addHelpText(
+  'after',
+  `
+${pc.bold('Quick Start (New here? Start with one of these):')}
+  ${pc.cyan('polyskill init')}                          Interactive 3-step guided skill builder
+  ${pc.cyan('polyskill ui')}                            Open the Visual Web Studio (http://localhost:3456)
+  ${pc.cyan('polyskill create "Your skill idea"')}      Generate a skill from plain English
+  ${pc.cyan('polyskill compile examples/billing-ops.py')} Compile code/OpenAPI/YAML into agent packages
+  ${pc.cyan('polyskill install examples/billing-ops.py --dry-run')} Preview local agent installation
+`
+);
 
 // Command 1: compile
 program
@@ -77,6 +98,18 @@ program
         }
         console.log();
       }
+
+      const nextSteps = formatNextSteps({
+        sourceArg: sourcePath,
+        skillName: result.ir.name,
+        firstTool: result.ir.tools[0]?.name,
+        outDir: options.out
+      });
+      console.log(pc.bold('Next steps:'));
+      for (const step of nextSteps) {
+        console.log(`  • ${step}`);
+      }
+      console.log();
     } catch (err: unknown) {
       console.error(pc.red(`\n[COMPILATION FAILED] ${err instanceof Error ? err.message : String(err)}\n`));
       process.exit(1);
@@ -183,58 +216,117 @@ program
   });
 
 
+// Command: init / wizard (Interactive Guided Skill Builder)
+program
+  .command('init')
+  .alias('wizard')
+  .description('Launch the interactive 3-step guided skill builder')
+  .action(async () => {
+    await runGuidedWizard({
+      onLaunchUi: () => startWebServer(3456)
+    });
+  });
+
 // Command: create (Natural Language Skill Synthesizer)
 program
   .command('create')
   .description('Synthesize a new agent skill from a plain-English prompt')
   .argument('<prompt>', 'Description of what the skill should do')
+  .option('-n, --name <name>', 'Optional display name for the generated skill')
   .option('-t, --targets <targets>', 'Comma-separated target list (antigravity, mcp, cursor, openai, all)', 'all')
   .option('-o, --out <dir>', 'Output destination directory', './dist')
   .option('--provider <provider>', 'Synthesizer engine: builtin, gemini, openai, ollama', 'builtin')
   .option('--key <apiKey>', 'API key for BYOK provider')
-  .action(async (prompt: string, options: { targets: string; out: string; provider: string; key?: string }) => {
+  .option('--install', 'Also install the created skill into local agents (Antigravity, Claude MCP, Cursor)')
+  .option('--json', 'Output machine-readable JSON summary')
+  .action(async (
+    prompt: string,
+    options: {
+      name?: string;
+      targets: string;
+      out: string;
+      provider: string;
+      key?: string;
+      install?: boolean;
+      json?: boolean;
+    }
+  ) => {
     try {
-      console.log(pc.cyan(`\n⚡ PolySkill Natural Language Synthesizer`));
-      console.log(pc.gray(`   Prompt:   ${pc.white(prompt)}`));
-      console.log(pc.gray(`   Engine:   ${pc.magenta(options.provider)}`));
-      console.log(pc.gray(`   Output:   ${pc.white(options.out)}\n`));
-
-      const startTime = performance.now();
+      if (!VALID_PROVIDERS.has(options.provider)) {
+        throw new Error(`Unsupported provider "${options.provider}". Choose one of: builtin, gemini, openai, ollama.`);
+      }
+      const provider = options.provider as WizardProvider;
       const targets = options.targets.split(',').map(t => t.trim()) as CompilerTarget[];
 
-      // Step 1: Synthesize IR
-      const { NaturalLanguageSynthesizer } = await import('../parsers/natural.js');
-      const ir = await NaturalLanguageSynthesizer.synthesize({
+      if (!options.json) {
+        console.log(pc.cyan(`\n⚡ PolySkill Natural Language Synthesizer`));
+        console.log(pc.gray(`   Prompt:   ${pc.white(prompt)}`));
+        console.log(pc.gray(`   Engine:   ${pc.magenta(provider)}`));
+        console.log(pc.gray(`   Output:   ${pc.white(options.out)}\n`));
+      }
+
+      const startTime = performance.now();
+      const result = await compileFromWizardPrompt({
         prompt,
-        provider: options.provider as any,
-        apiKey: options.key
+        customName: options.name,
+        provider,
+        apiKey: options.key,
+        targets
       });
 
-      // Step 2: Harden Guardrails
-      ir.tools = GuardrailSynthesizer.synthesize(ir.tools, ir.guardrails);
+      const written = writeCompilationArtifacts(result, options.out);
+      const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
 
-      // Step 3: Run Audit
-      const audit = GuardrailSynthesizer.audit(ir.tools, ir.guardrails);
-      ir.metadata.safetyScore = audit.safetyScore;
+      let installSummary = null;
+      if (options.install) {
+        installSummary = SkillInstaller.install(result, {
+          targets: ['all'],
+          scope: 'global',
+          dryRun: false
+        });
+      }
 
-      // Step 4: Emit Artifacts
-      const { TargetEmissions } = await import('../generators/index.js');
-      const targetFiles = TargetEmissions.emit(ir, targets);
+      if (options.json) {
+        console.log(JSON.stringify({
+          ir: result.ir,
+          safetyScore: result.auditReport.safetyScore,
+          writtenFiles: written.map(f => path.relative(process.cwd(), f)),
+          installed: installSummary?.installedItems || []
+        }, null, 2));
+        return;
+      }
 
-      const outDir = path.resolve(process.cwd(), options.out);
-      for (const [relPath, fileContent] of Object.entries(targetFiles)) {
-        const fullPath = path.join(outDir, relPath);
-        fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-        fs.writeFileSync(fullPath, fileContent, 'utf-8');
+      for (const fullPath of written) {
         console.log(pc.green(`  ✔ Emitted: `) + pc.white(path.relative(process.cwd(), fullPath)));
       }
 
-      const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
       console.log(`\n${pc.bold('Synthesis Summary:')}`);
-      console.log(`  • Skill Name:   ${pc.bold(pc.magenta(ir.displayName))} (${pc.gray(ir.name)})`);
-      console.log(`  • Capabilities: ${pc.bold(pc.yellow(String(ir.tools.length)))} tools generated`);
-      console.log(`  • Safety Score: ${pc.green(pc.bold(`${audit.safetyScore}/100`))}`);
-      console.log(`  • Artifacts:    ${pc.bold(String(Object.keys(targetFiles).length))} files in ${elapsed}s\n`);
+      console.log(`  • Skill Name:   ${pc.bold(pc.magenta(result.ir.displayName))} (${pc.gray(result.ir.name)})`);
+      console.log(`  • Capabilities: ${pc.bold(pc.yellow(String(result.ir.tools.length)))} tools generated`);
+      for (const tool of result.ir.tools) {
+        console.log(`      - ${pc.white(tool.name)} ${pc.gray(`[${tool.riskLevel}]`)}`);
+      }
+      console.log(`  • Safety Score: ${pc.green(pc.bold(`${result.auditReport.safetyScore}/100`))}`);
+      console.log(`  • Artifacts:    ${pc.bold(String(written.length))} files in ${elapsed}s`);
+
+      if (installSummary) {
+        console.log(pc.bold('\nInstalled Targets:'));
+        for (const item of installSummary.installedItems) {
+          console.log(`  ✔ ${pc.bold(item.target.toUpperCase())}: ${pc.white(item.path)}`);
+        }
+      }
+
+      const nextSteps = formatNextSteps({
+        skillName: result.ir.name,
+        firstTool: result.ir.tools[0]?.name,
+        outDir: options.out,
+        didInstall: Boolean(options.install)
+      });
+      console.log(pc.bold('\nNext steps:'));
+      for (const step of nextSteps) {
+        console.log(`  • ${step}`);
+      }
+      console.log();
     } catch (err: unknown) {
       console.error(pc.red(`\n[SYNTHESIS FAILED] ${err instanceof Error ? err.message : String(err)}\n`));
       process.exit(1);
@@ -394,4 +486,17 @@ program
     }
   });
 
-program.parse(process.argv);
+if (process.argv.length <= 2) {
+  if (process.stdin.isTTY) {
+    runGuidedWizard({
+      onLaunchUi: () => startWebServer(3456)
+    }).catch((err: unknown) => {
+      console.error(pc.red(`\n[WIZARD ERROR] ${err instanceof Error ? err.message : String(err)}\n`));
+      process.exit(1);
+    });
+  } else {
+    program.outputHelp();
+  }
+} else {
+  program.parse(process.argv);
+}
