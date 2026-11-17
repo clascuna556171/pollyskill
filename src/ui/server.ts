@@ -8,7 +8,11 @@ import { fileURLToPath } from 'node:url';
 import pc from 'picocolors';
 import { PolySkillCompiler } from '../compiler.js';
 import { SandboxRunner } from '../sandbox/runner.js';
-import { SkillIR } from '../ir/types.js';
+import { CompilationResult, CompilerTarget, SkillIR } from '../ir/types.js';
+import { IRValidator } from '../ir/validator.js';
+import { SkillInstaller } from '../install/installer.js';
+import { InstallScope, InstallTarget } from '../install/types.js';
+import { buildZipArchive } from './zip.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -261,8 +265,84 @@ export async function terminateCluster(clusterId: string, drainSeconds: number =
   }
 };
 
+function readJsonBody<T>(req: http.IncomingMessage): Promise<T> {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk;
+      if (body.length > 2 * 1024 * 1024) {
+        reject(new Error('Request payload exceeds 2MB limit.'));
+      }
+    });
+    req.on('end', () => {
+      try {
+        resolve((body ? JSON.parse(body) : {}) as T);
+      } catch {
+        reject(new Error('Invalid JSON request payload.'));
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
+function sendJson(res: http.ServerResponse, status: number, payload: unknown): void {
+  res.writeHead(status, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(payload));
+}
+
+function recompileIR(ir: SkillIR, targets: CompilerTarget[] = ['all']): CompilationResult {
+  const clonedTools = ir.tools.map(tool => ({
+    ...tool,
+    parameters: {
+      ...tool.parameters,
+      properties: { ...tool.parameters.properties },
+      required: tool.parameters.required ? [...tool.parameters.required] : []
+    },
+    execution: { ...tool.execution },
+    guardrails: tool.guardrails ? { ...tool.guardrails } : undefined
+  }));
+
+  const normalizedIr: SkillIR = {
+    ...ir,
+    name: ir.name.toLowerCase().trim().replace(/[^a-z0-9_-]+/g, '-').replace(/^-|-$/g, '') || 'custom-skill',
+    tools: GuardrailSynthesizer.synthesize(clonedTools, ir.guardrails),
+    metadata: {
+      ...ir.metadata,
+      compiledAt: new Date().toISOString()
+    }
+  };
+
+  const validation = IRValidator.validate(normalizedIr);
+  const audit = GuardrailSynthesizer.audit(normalizedIr.tools, normalizedIr.guardrails);
+  normalizedIr.metadata.safetyScore = audit.safetyScore;
+  const targetFiles = TargetEmissions.emit(normalizedIr, targets);
+
+  const diagnostics: CompilationResult['diagnostics'] = validation.issues.map(issue => ({
+    level: issue.severity === 'error' ? 'error' : 'warning',
+    message: `[IR Validation] ${issue.path}: ${issue.message}`
+  }));
+  diagnostics.push({
+    level: 'info',
+    message: `Compiled '${normalizedIr.displayName}' across targets: ${targets.join(', ')}`
+  });
+
+  return {
+    ir: normalizedIr,
+    targetFiles,
+    diagnostics,
+    auditReport: {
+      safetyScore: audit.safetyScore,
+      findings: audit.findings.map(f => ({
+        severity: f.severity,
+        message: f.message,
+        rule: f.rule
+      }))
+    }
+  };
+}
+
 export function startWebServer(port = 3456) {
-  const server = http.createServer((req, res) => {
+  const server = http.createServer(async (req, res) => {
     // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -274,120 +354,175 @@ export function startWebServer(port = 3456) {
       return;
     }
 
-    const url = new URL(req.url || '/', `http://${req.headers.host}`);
+    const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
 
     // API: GET /api/presets
     if (url.pathname === '/api/presets' && req.method === 'GET') {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(PRESETS));
+      sendJson(res, 200, PRESETS);
       return;
     }
 
     // API: POST /api/compile
     if (url.pathname === '/api/compile' && req.method === 'POST') {
-      let body = '';
-      req.on('data', chunk => { body += chunk; });
-      req.on('end', () => {
-        try {
-          const payload = JSON.parse(body);
-          const source = payload.source || '';
-          const filename = payload.filename || 'input.spec';
-          const targets = payload.targets || ['all'];
-          const harden = payload.harden !== false;
+      try {
+        const payload = await readJsonBody<{
+          source?: string;
+          filename?: string;
+          targets?: CompilerTarget[];
+          harden?: boolean;
+        }>(req);
 
-          const result = PolySkillCompiler.compile(source, {
-            filename,
-            targets,
-            hardenGuardrails: harden
-          });
-
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(result));
-        } catch (err: unknown) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
-        }
-      });
+        const result = PolySkillCompiler.compile(payload.source || '', {
+          filename: payload.filename || 'input.spec',
+          targets: payload.targets || ['all'],
+          hardenGuardrails: payload.harden !== false
+        });
+        sendJson(res, 200, result);
+      } catch (err: unknown) {
+        sendJson(res, 400, { error: err instanceof Error ? err.message : String(err) });
+      }
       return;
     }
 
     // API: POST /api/simulate
     if (url.pathname === '/api/simulate' && req.method === 'POST') {
-      let body = '';
-      req.on('data', chunk => { body += chunk; });
-      req.on('end', () => {
-        try {
-          const payload = JSON.parse(body);
-          const ir = payload.ir as SkillIR;
-          const toolName = payload.toolName as string;
-          const args = payload.args as Record<string, unknown>;
+      try {
+        const payload = await readJsonBody<{
+          ir: SkillIR;
+          toolName: string;
+          args?: Record<string, unknown>;
+        }>(req);
 
-          const result = SandboxRunner.simulateExecution(ir, toolName, args);
-
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify(result));
-        } catch (err: unknown) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
-        }
-      });
+        const result = SandboxRunner.simulateExecution(payload.ir, payload.toolName, payload.args || {});
+        sendJson(res, 200, result);
+      } catch (err: unknown) {
+        sendJson(res, 400, { error: err instanceof Error ? err.message : String(err) });
+      }
       return;
     }
 
-    
     // API: POST /api/synthesize (Natural Language Skill Generator)
     if (url.pathname === '/api/synthesize' && req.method === 'POST') {
-      let body = '';
-      req.on('data', chunk => { body += chunk; });
-      req.on('end', async () => {
-        try {
-          const payload = JSON.parse(body);
-          const prompt = payload.prompt || '';
-          const provider = payload.provider || 'builtin';
-          const apiKey = payload.apiKey;
-          const model = payload.model;
-          const targets = payload.targets || ['all'];
+      try {
+        const payload = await readJsonBody<{
+          prompt?: string;
+          name?: string;
+          provider?: 'builtin' | 'gemini' | 'openai' | 'ollama';
+          apiKey?: string;
+          model?: string;
+          targets?: CompilerTarget[];
+        }>(req);
 
-          // Step 1: Synthesize IR from Natural Language
-          const ir = await NaturalLanguageSynthesizer.synthesize({
-            prompt,
-            provider,
-            apiKey,
-            model
-          });
+        const ir = await NaturalLanguageSynthesizer.synthesize({
+          prompt: payload.prompt || '',
+          provider: payload.provider || 'builtin',
+          apiKey: payload.apiKey,
+          model: payload.model
+        });
 
-          // Step 2: Harden Guardrails
-          ir.tools = GuardrailSynthesizer.synthesize(ir.tools, ir.guardrails);
-
-          // Step 3: Run Audit
-          const audit = GuardrailSynthesizer.audit(ir.tools, ir.guardrails);
-          ir.metadata.safetyScore = audit.safetyScore;
-
-          // Step 4: Generate Target Artifacts
-          const targetFiles = TargetEmissions.emit(ir, targets);
-
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({
-            ir,
-            targetFiles,
-            diagnostics: [
-              { level: 'info', message: `Synthesized '${ir.displayName}' via ${provider} synthesizer` }
-            ],
-            auditReport: audit
-          }));
-        } catch (err: unknown) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+        if (payload.name && payload.name.trim()) {
+          ir.displayName = payload.name.trim();
+          ir.name = payload.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || ir.name;
         }
-      });
+
+        const result = recompileIR(ir, payload.targets || ['all']);
+        result.diagnostics.unshift({
+          level: 'info',
+          message: `Synthesized '${result.ir.displayName}' via ${payload.provider || 'builtin'} synthesizer`
+        });
+        sendJson(res, 200, result);
+      } catch (err: unknown) {
+        sendJson(res, 400, { error: err instanceof Error ? err.message : String(err) });
+      }
       return;
     }
-  
-    // Static Files
-    let filePath = path.join(PUBLIC_DIR, url.pathname === '/' ? 'index.html' : url.pathname);
 
-    // Fallback if looking in project root
-    if (!fs.existsSync(filePath)) {
+    // API: POST /api/recompile (Re-harden and emit artifacts after live UI edits)
+    if (url.pathname === '/api/recompile' && req.method === 'POST') {
+      try {
+        const payload = await readJsonBody<{
+          ir?: SkillIR;
+          targets?: CompilerTarget[];
+        }>(req);
+        if (!payload.ir || !Array.isArray(payload.ir.tools)) {
+          throw new Error('A valid SkillIR object with tools is required.');
+        }
+        const result = recompileIR(payload.ir, payload.targets || ['all']);
+        sendJson(res, 200, result);
+      } catch (err: unknown) {
+        sendJson(res, 400, { error: err instanceof Error ? err.message : String(err) });
+      }
+      return;
+    }
+
+    // API: POST /api/install (Mount compiled skill into local Antigravity, Claude MCP, Cursor)
+    if (url.pathname === '/api/install' && req.method === 'POST') {
+      try {
+        const payload = await readJsonBody<{
+          ir?: SkillIR;
+          targets?: InstallTarget[];
+          scope?: InstallScope;
+          dryRun?: boolean;
+          workspaceDir?: string;
+          antigravityDir?: string;
+          mcpServerDir?: string;
+          claudeConfigPath?: string;
+        }>(req);
+        if (!payload.ir || !Array.isArray(payload.ir.tools)) {
+          throw new Error('A compiled SkillIR is required to install.');
+        }
+
+        const compilation = recompileIR(payload.ir, ['all']);
+        const installResult = SkillInstaller.install(compilation, {
+          targets: payload.targets && payload.targets.length > 0 ? payload.targets : ['all'],
+          scope: payload.scope || 'global',
+          dryRun: payload.dryRun !== false,
+          workspaceDir: payload.workspaceDir,
+          antigravityDir: payload.antigravityDir,
+          mcpServerDir: payload.mcpServerDir,
+          claudeConfigPath: payload.claudeConfigPath
+        });
+        sendJson(res, 200, installResult);
+      } catch (err: unknown) {
+        sendJson(res, 400, { error: err instanceof Error ? err.message : String(err) });
+      }
+      return;
+    }
+
+    // API: POST /api/bundle (Download genuine .zip package of all generated target files)
+    if (url.pathname === '/api/bundle' && req.method === 'POST') {
+      try {
+        const payload = await readJsonBody<{
+          name?: string;
+          targetFiles?: Record<string, string>;
+        }>(req);
+        if (!payload.targetFiles || Object.keys(payload.targetFiles).length === 0) {
+          throw new Error('No compiled target files available to bundle.');
+        }
+        const safeName = (payload.name || 'polyskill')
+          .toLowerCase()
+          .replace(/[^a-z0-9_-]+/g, '-')
+          .replace(/^-|-$/g, '') || 'polyskill';
+        const zipBuffer = buildZipArchive(payload.targetFiles);
+        res.writeHead(200, {
+          'Content-Type': 'application/zip',
+          'Content-Disposition': `attachment; filename="${safeName}-skill-bundle.zip"`,
+          'Content-Length': String(zipBuffer.length)
+        });
+        res.end(zipBuffer);
+      } catch (err: unknown) {
+        sendJson(res, 400, { error: err instanceof Error ? err.message : String(err) });
+      }
+      return;
+    }
+
+    // Static Files (with path boundary enforcement)
+    const relStatic = (url.pathname === '/' ? 'index.html' : url.pathname).replace(/^\/+/, '');
+    let filePath = path.resolve(PUBLIC_DIR, relStatic);
+    if (!filePath.startsWith(PUBLIC_DIR + path.sep) && filePath !== path.join(PUBLIC_DIR, 'index.html')) {
+      filePath = path.join(PUBLIC_DIR, 'index.html');
+    }
+    if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
       filePath = path.join(PUBLIC_DIR, 'index.html');
     }
 
@@ -417,8 +552,10 @@ export function startWebServer(port = 3456) {
   });
 
   server.listen(port, () => {
+    const addr = server.address();
+    const actualPort = typeof addr === 'object' && addr ? addr.port : port;
     console.log(pc.cyan(`\n✨ PolySkill Web Studio is running!`));
-    console.log(pc.green(`   URL: ${pc.bold(pc.underline(`http://localhost:${port}`))}\n`));
+    console.log(pc.green(`   URL: ${pc.bold(pc.underline(`http://localhost:${actualPort}`))}\n`));
     console.log(pc.gray(`   Press Ctrl+C to stop.`));
   });
 

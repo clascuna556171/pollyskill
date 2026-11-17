@@ -20,10 +20,16 @@ export class NaturalLanguageSynthesizer {
       throw new Error('Please provide a prompt describing your skill.');
     }
 
-    // If BYOK is chosen and key/endpoint is available, call external LLM
-    if (options.provider === 'gemini' && options.apiKey) {
+    // If BYOK is chosen, require key or invoke Ollama
+    if (options.provider === 'gemini') {
+      if (!options.apiKey || !options.apiKey.trim()) {
+        throw new Error('An API key is required for Google Gemini synthesis. Enter a key or switch to Built-in Offline mode.');
+      }
       return this.callGeminiAPI(prompt, options.apiKey, options.model || 'gemini-1.5-flash');
-    } else if (options.provider === 'openai' && options.apiKey) {
+    } else if (options.provider === 'openai') {
+      if (!options.apiKey || !options.apiKey.trim()) {
+        throw new Error('An API key is required for OpenAI synthesis. Enter a key or switch to Built-in Offline mode.');
+      }
       return this.callOpenAIAPI(prompt, options.apiKey, options.model || 'gpt-4o-mini');
     } else if (options.provider === 'ollama') {
       return this.callOllamaAPI(prompt, options.model || 'llama3');
@@ -63,9 +69,24 @@ export class NaturalLanguageSynthesizer {
       category = 'developer_tool';
       domainTitle = 'Technical Writing & Documentation Editor';
       isReviewOrAdvisory = true;
+    } else {
+      const stopWords = new Set([
+        'a', 'an', 'the', 'and', 'or', 'for', 'to', 'of', 'in', 'on', 'with',
+        'that', 'this', 'from', 'by', 'into', 'your', 'our', 'skill', 'agent',
+        'tool', 'assistant', 'automated', 'create', 'build', 'make', 'help'
+      ]);
+      const words = prompt
+        .replace(/[^a-zA-Z0-9\s]/g, ' ')
+        .split(/\s+/)
+        .map(w => w.trim())
+        .filter(w => w.length > 2 && !stopWords.has(w.toLowerCase()));
+      const titleWords = words.slice(0, 3).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+      if (titleWords.length > 0) {
+        domainTitle = `${titleWords.join(' ')} Assistant`;
+      }
     }
 
-    const slugName = domainTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const slugName = domainTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'custom-skill';
     const tools: SkillTool[] = [];
 
     // Synthesize domain-specific capabilities
@@ -138,53 +159,63 @@ export class NaturalLanguageSynthesizer {
       });
     } else {
       // General Smart Synthesis for any other domain
-      const tool1Name = `analyze_${slugName.split('-')[0] || 'input'}`;
-      const tool2Name = `validate_${slugName.split('-')[1] || 'state'}`;
-      const tool3Name = `apply_${slugName.split('-')[0] || 'changes'}`;
+      const topicWords = slugName.split('-').filter(w => w && w !== 'assistant' && w !== 'custom' && w !== 'domain');
+      const primaryNoun = topicWords[0] || 'input';
+      const secondaryNoun = topicWords[1] || primaryNoun;
+      const hasDestructiveIntent = /\b(delete|drop|purge|remove|truncate|kill|terminate|destroy)\b/.test(lower);
+
+      const tool1Name = `inspect_${primaryNoun}`;
+      const tool2Name = `validate_${secondaryNoun}`;
+      const tool3Name = hasDestructiveIntent ? `purge_${primaryNoun}` : `apply_${primaryNoun}`;
+      const thirdRisk: ToolRiskLevel = hasDestructiveIntent
+        ? 'destructive_write'
+        : (isReviewOrAdvisory ? 'read_only' : 'idempotent_write');
 
       tools.push({
         id: tool1Name,
         name: tool1Name,
-        description: `Analyze and inspect inputs relevant to: ${prompt.slice(0, 100)}`,
+        description: `Analyze and inspect ${primaryNoun} inputs relevant to: ${prompt.slice(0, 100)}`,
         riskLevel: 'read_only',
         parameters: {
           type: 'object',
           properties: {
-            target: { type: 'string', description: 'Target identifier, file path, or query' }
+            target: { type: 'string', description: `Target ${primaryNoun} identifier, file path, or query` }
           },
           required: ['target']
         },
-        execution: { type: 'cli', command: `echo "Analyzing target..."` }
+        execution: { type: 'cli', command: `echo "Analyzing ${primaryNoun} target..."` }
       });
 
       tools.push({
         id: tool2Name,
         name: tool2Name,
-        description: `Verify constraints and validate status according to guidelines.`,
+        description: `Verify ${secondaryNoun} constraints and validate status before execution.`,
         riskLevel: 'read_only',
         parameters: {
           type: 'object',
           properties: {
-            query: { type: 'string', description: 'Validation query or parameters' }
+            query: { type: 'string', description: 'Validation criteria or parameters' }
           },
           required: []
         },
-        execution: { type: 'cli', command: `echo "Validating state..."` }
+        execution: { type: 'cli', command: `echo "Validating ${secondaryNoun}..."` }
       });
 
       tools.push({
         id: tool3Name,
         name: tool3Name,
-        description: `Perform safe updates or apply recommended transformations.`,
-        riskLevel: isReviewOrAdvisory ? 'read_only' : 'idempotent_write',
+        description: hasDestructiveIntent
+          ? `Execute gated ${primaryNoun} removal with mandatory confirmation and dry-run support.`
+          : `Perform safe ${primaryNoun} updates or generate recommended output.`,
+        riskLevel: thirdRisk,
         parameters: {
           type: 'object',
           properties: {
-            actionName: { type: 'string', description: 'Specific action or refinement to apply' }
+            actionName: { type: 'string', description: `Specific ${primaryNoun} action or refinement to apply` }
           },
           required: ['actionName']
         },
-        execution: { type: 'cli', command: `echo "Applying action..."` }
+        execution: { type: 'cli', command: `echo "Applying ${primaryNoun} action..."` }
       });
     }
 
