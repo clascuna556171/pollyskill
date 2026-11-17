@@ -11,67 +11,80 @@
 </head>
 <body class="pro-dark">
   <div class="workspace-layout">
-    
-    <!-- LEFT SIDEBAR: SKILL REPOSITORY -->
-    <aside class="sidebar">
+
+    <!-- LEFT SIDEBAR: SKILLS & NAVIGATION -->
+    <aside class="sidebar" aria-label="Skill navigation">
       <div class="sidebar-header">
         <div class="brand-identity">
-          <img src="logo.png" alt="PolySkill" class="brand-logo" width="32" height="32">
+          <img src="logo.png" alt="PolySkill logo" class="brand-logo" width="32" height="32">
           <div class="brand-meta">
             <span class="brand-name">PolySkill</span>
-            <span class="brand-version">v1.0.0</span>
+            <span class="brand-version">Skill Studio v1.0</span>
           </div>
         </div>
-        <button id="openCreateModalBtn" class="btn-create-skill">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <button id="openCreateModalBtn" class="btn-create-skill" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           <span>New Skill</span>
         </button>
       </div>
 
       <nav class="sidebar-nav">
-        <!-- Your Custom Skills -->
-        <div class="nav-section-title">Your Custom Skills</div>
+        <div class="nav-section-header">
+          <span class="nav-section-title">Your Custom Skills</span>
+          <span id="customSkillCount" class="nav-section-count">0</span>
+        </div>
         <div id="customSkillsList" class="nav-items-group">
-          <!-- Dynamically populated when user generates custom skills -->
+          <div class="nav-empty-hint">No custom skills yet. Click <strong>New Skill</strong> to build from plain English or code.</div>
         </div>
 
-        <!-- Built-in Templates -->
-        <div class="nav-section-title">Verified Templates</div>
-        <div class="nav-items-group">
-          <button class="nav-item active" data-skill="stripe-billing">
-            <span class="nav-item-icon">💳</span>
+        <div class="nav-section-header">
+          <span class="nav-section-title">Starter Templates</span>
+        </div>
+        <div id="templateNavList" class="nav-items-group">
+          <button class="nav-item active" type="button" data-skill="stripe-billing">
+            <span class="nav-item-svg" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+            </span>
             <div class="nav-item-text">
               <span class="nav-item-title">Stripe Billing Ops</span>
               <span class="nav-item-sub">OpenAPI v3 Spec</span>
             </div>
           </button>
 
-          <button class="nav-item" data-skill="postgres-ops">
-            <span class="nav-item-icon">🐘</span>
+          <button class="nav-item" type="button" data-skill="postgres-ops">
+            <span class="nav-item-svg" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+            </span>
             <div class="nav-item-text">
               <span class="nav-item-title">Postgres Migrations</span>
               <span class="nav-item-sub">Python Script</span>
             </div>
           </button>
 
-          <button class="nav-item" data-skill="cloud-sre">
-            <span class="nav-item-icon">☁️</span>
+          <button class="nav-item" type="button" data-skill="cloud-sre">
+            <span class="nav-item-svg" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+            </span>
             <div class="nav-item-text">
               <span class="nav-item-title">AWS ECS Recovery</span>
-              <span class="nav-item-sub">SkillSpec Runbook</span>
+              <span class="nav-item-sub">SkillSpec YAML</span>
             </div>
           </button>
 
-          <button class="nav-item" data-skill="ui-ux-design">
-            <span class="nav-item-icon">🎨</span>
+          <button class="nav-item" type="button" data-skill="ui-ux-design">
+            <span class="nav-item-svg" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18"></path><path d="M9 21V9"></path></svg>
+            </span>
             <div class="nav-item-text">
               <span class="nav-item-title">UI/UX Design Reviewer</span>
-              <span class="nav-item-sub">Apple HIG & Contrast</span>
+              <span class="nav-item-sub">Plain-English Prompt</span>
             </div>
           </button>
 
-          <button class="nav-item" data-skill="cloud-deploy">
-            <span class="nav-item-icon">⚡</span>
+          <button class="nav-item" type="button" data-skill="cloud-deploy">
+            <span class="nav-item-svg" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            </span>
             <div class="nav-item-text">
               <span class="nav-item-title">Cloud Deploy SDK</span>
               <span class="nav-item-sub">TypeScript / JSDoc</span>
@@ -80,50 +93,123 @@
         </div>
       </nav>
 
-      <!-- Sidebar Footer Status -->
       <div class="sidebar-footer">
         <div class="safety-status-card">
           <div class="status-indicator">
-            <span class="dot-green"></span>
-            <span class="status-label">Security Shield Active</span>
+            <span class="dot-green" aria-hidden="true"></span>
+            <span class="status-label">Guardrails Synthesized</span>
           </div>
-          <p class="status-caption">Path traversal and destructive mutation guards enforced.</p>
+          <p class="status-caption">Path, SSRF, credential, and destructive gates run locally in ~2ms.</p>
         </div>
       </div>
     </aside>
 
-    <!-- CENTER CANVAS: ACTIVE SKILL WORKSPACE -->
+    <!-- CENTER CANVAS: 3-STEP JOURNEY + ACTIVE SKILL WORKSPACE -->
     <main class="canvas">
+      <!-- Guided Workflow Step Bar -->
+      <div class="workflow-bar" role="navigation" aria-label="Skill creation steps">
+        <button id="stepCreateBtn" class="workflow-step active" type="button">
+          <span class="step-num">1</span>
+          <span class="step-label">Create or Pick Source</span>
+        </button>
+        <span class="step-arrow" aria-hidden="true">→</span>
+        <button id="stepReviewBtn" class="workflow-step" type="button">
+          <span class="step-num">2</span>
+          <span class="step-label">Review, Edit &amp; Test</span>
+        </button>
+        <span class="step-arrow" aria-hidden="true">→</span>
+        <button id="stepDeployBtn" class="workflow-step" type="button">
+          <span class="step-num">3</span>
+          <span class="step-label">Export or Install</span>
+        </button>
+        <button id="showGuideBtn" class="btn-guide-toggle" type="button" title="Show quick-start guide">How it works</button>
+      </div>
+
+      <!-- Quick-Start Banner (dismissible, non-blocking) -->
+      <section id="quickStartBanner" class="quickstart-banner" aria-label="Quick start guide">
+        <div class="quickstart-copy">
+          <h2 class="quickstart-title">Start here: turn an idea or existing code into a safe agent skill</h2>
+          <p class="quickstart-desc">Currently viewing a starter example below. Create your own from plain English or paste a Python, TypeScript, Bash, OpenAPI, or YAML file—then test its safety gates and export or install it on the right.</p>
+        </div>
+        <div class="quickstart-actions">
+          <button id="qsDescribeBtn" class="btn-qs primary" type="button">Describe in Plain English</button>
+          <button id="qsCodeBtn" class="btn-qs secondary" type="button">Paste or Upload Code / API</button>
+          <button id="qsDismissBtn" class="btn-qs ghost" type="button">Hide guide</button>
+        </div>
+      </section>
+
       <!-- Skill Header Banner -->
       <header class="canvas-header">
         <div class="canvas-header-left">
           <div class="title-row">
             <h1 id="activeSkillTitle" class="skill-main-title">Stripe Billing Ops</h1>
-            <span id="activeSkillCategoryBadge" class="category-badge">Finance & APIs</span>
+            <span id="activeSkillSourceBadge" class="source-badge">OPENAPI</span>
+            <span id="activeSkillCategoryBadge" class="category-badge">FINANCE</span>
             <span id="activeSkillSafetyScore" class="score-pill">100% Protected</span>
           </div>
           <p id="activeSkillDesc" class="skill-main-desc">Operations skill for managing customer subscriptions, invoices, and payment refunds.</p>
         </div>
 
         <div class="canvas-header-actions">
-          <button id="copyBareMdBtn" class="btn-copy-md" title="Copy raw SKILL.md markdown directly to clipboard">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-            <span class="btn-copy-md-text">Copy Raw .md</span>
+          <button id="toggleEditSkillBtn" class="btn-refine" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            <span>Edit Skill Details</span>
           </button>
-          <button id="refineSkillBtn" class="btn-refine">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-            <span>Edit / Refine</span>
+          <button id="refineSkillBtn" class="btn-refine secondary-outline" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+            <span>Edit Source / Prompt</span>
           </button>
         </div>
       </header>
 
       <!-- Canvas Content Scrollable Area -->
-      <div class="canvas-scroll-body">
-        
+      <div id="canvasScrollBody" class="canvas-scroll-body">
+
+        <!-- INLINE SKILL EDITOR PANEL (Hidden by default) -->
+        <section id="inlineEditorPanel" class="inline-editor-panel" hidden aria-label="Edit active skill metadata">
+          <div class="editor-panel-header">
+            <div>
+              <h2 class="section-title">Edit Skill Metadata &amp; Instructions</h2>
+              <p class="section-caption">Changes recompile all target files and security scores immediately.</p>
+            </div>
+            <button id="closeInlineEditorBtn" class="btn-qs ghost" type="button">Done</button>
+          </div>
+          <div class="editor-grid">
+            <div class="form-group">
+              <label for="editDisplayName" class="form-label">Display Name</label>
+              <input id="editDisplayName" class="form-input-text" type="text" placeholder="e.g. Stripe Billing Ops">
+            </div>
+            <div class="form-group">
+              <label for="editCategory" class="form-label">Category</label>
+              <select id="editCategory" class="form-select">
+                <option value="developer_tool">Developer Tool</option>
+                <option value="cloud">Cloud</option>
+                <option value="devops">DevOps</option>
+                <option value="database">Database</option>
+                <option value="finance">Finance</option>
+                <option value="security">Security</option>
+                <option value="general">General</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="editDescription" class="form-label">Description</label>
+            <textarea id="editDescription" class="form-textarea compact" placeholder="What does this skill do?"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="editWorkflow" class="form-label">Workflow Instructions (written into SKILL.md &amp; .cursorrules)</label>
+            <textarea id="editWorkflow" class="form-textarea compact mono" placeholder="1. Inspect state...&#10;2. Validate args..."></textarea>
+          </div>
+          <div class="editor-footer">
+            <span id="editorStatusMsg" class="editor-status-msg" aria-live="polite"></span>
+            <button id="saveInlineEditsBtn" class="btn-dialog primary" type="button">Apply &amp; Recompile</button>
+          </div>
+        </section>
+
         <!-- SECTION 1: CAPABILITIES -->
-        <section class="canvas-section">
+        <section id="capabilitiesSection" class="canvas-section">
           <div class="section-title-bar">
-            <h2 class="section-title">Agent Capabilities</h2>
+            <h2 class="section-title">2. Review Capabilities &amp; Guardrails</h2>
             <span id="toolCountLabel" class="section-count">4 capabilities ready</span>
           </div>
           <div id="capabilitiesGrid" class="capabilities-grid">
@@ -132,37 +218,36 @@
         </section>
 
         <!-- SECTION 2: INTERACTIVE TEST BENCH -->
-        <section class="canvas-section">
+        <section id="testBenchSection" class="canvas-section">
           <div class="section-title-bar">
             <h2 class="section-title">Interactive Safety Test Bench</h2>
-            <span class="section-caption">Test tools in an isolated sandbox with zero side-effects</span>
+            <span class="section-caption">Simulate safe dry-runs or attack vectors locally with zero side-effects</span>
           </div>
 
           <div class="test-bench-panel">
             <div class="bench-top-bar">
               <div class="bench-selector-group">
-                <label for="benchToolSelect" class="bench-label">Select Capability:</label>
+                <label for="benchToolSelect" class="bench-label">Capability:</label>
                 <select id="benchToolSelect" class="bench-select"></select>
               </div>
 
               <div class="bench-actions-group">
-                <button id="benchSafeBtn" class="btn-bench safe">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                  <span>Test Safe Run (dryRun)</span>
+                <button id="benchSafeBtn" class="btn-bench safe" type="button">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                  <span>Safe Dry-Run</span>
                 </button>
-                <button id="benchExploitBtn" class="btn-bench exploit">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                  <span>Simulate Traversal (../)</span>
+                <button id="benchExploitBtn" class="btn-bench exploit" type="button">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                  <span>Test ../ Traversal</span>
                 </button>
-                <button id="benchSecretBtn" class="btn-bench exploit">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                  <span>Simulate Credential Leak (sk-...)</span>
+                <button id="benchSecretBtn" class="btn-bench exploit" type="button">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  <span>Test Secret Leak</span>
                 </button>
               </div>
             </div>
 
-            <!-- Test Output Box -->
-            <div class="bench-output-box">
+            <div class="bench-output-box" aria-live="polite">
               <div class="bench-output-header">
                 <div class="output-status-wrap">
                   <span id="benchStatusPill" class="bench-pill ready">Standby</span>
@@ -170,7 +255,7 @@
                 </div>
                 <span class="output-engine-label">Local Sandbox Runtime</span>
               </div>
-              <pre id="benchOutputText" class="bench-pre">Select a capability above and click "Test Safe Run" or a simulation button to inspect live guardrail responses.</pre>
+              <pre id="benchOutputText" class="bench-pre">Select a capability above and click "Safe Dry-Run" or a simulation button to verify guardrails.</pre>
             </div>
           </div>
         </section>
@@ -178,31 +263,33 @@
         <!-- SECTION 3: SAFETY CONTROLS SUMMARY -->
         <section class="canvas-section">
           <div class="section-title-bar">
-            <h2 class="section-title">Active Guardrails</h2>
+            <h2 class="section-title">Active Runtime Shields</h2>
+            <span id="auditSummaryLabel" class="section-caption">All deterministic checks enforced</span>
           </div>
+          <div id="auditFindingsBanner" class="audit-findings-banner" hidden></div>
           <div class="guardrails-row">
             <div class="guardrail-chip">
-              <span class="chip-check">✔</span>
+              <span class="chip-check" aria-hidden="true">✔</span>
               <span>Path Traversal Blocker (<code>../</code>, system roots)</span>
             </div>
             <div class="guardrail-chip">
-              <span class="chip-check">✔</span>
-              <span>SSRF & IMDS Shield (<code>169.254.x.x</code>, RFC 1918)</span>
+              <span class="chip-check" aria-hidden="true">✔</span>
+              <span>SSRF &amp; IMDS Shield (<code>169.254.x.x</code>, RFC 1918)</span>
             </div>
             <div class="guardrail-chip">
-              <span class="chip-check">✔</span>
-              <span>Credential & Secret Leak Shield (API keys, JWT, SSH)</span>
+              <span class="chip-check" aria-hidden="true">✔</span>
+              <span>Credential &amp; Secret Leak Shield (API keys, JWT, SSH)</span>
             </div>
             <div class="guardrail-chip">
-              <span class="chip-check">✔</span>
+              <span class="chip-check" aria-hidden="true">✔</span>
               <span>Destructive Action Confirmation Gate</span>
             </div>
             <div class="guardrail-chip">
-              <span class="chip-check">✔</span>
+              <span class="chip-check" aria-hidden="true">✔</span>
               <span>Deterministic Dry-Run Simulation</span>
             </div>
             <div class="guardrail-chip">
-              <span class="chip-check">✔</span>
+              <span class="chip-check" aria-hidden="true">✔</span>
               <span>Execution Timeout</span>
             </div>
           </div>
@@ -211,78 +298,105 @@
       </div>
     </main>
 
-    <!-- RIGHT INSPECTOR: 1-CLICK EXPORT & INTEGRATION -->
-    <aside class="inspector">
+    <!-- RIGHT INSPECTOR: STEP 3 EXPORT & INSTALL -->
+    <aside id="deployInspector" class="inspector" aria-label="Export and install skill">
       <div class="inspector-header">
-        <h2 class="inspector-title">Deploy Skill</h2>
-        <span class="inspector-sub">Ready-to-use packages</span>
+        <h2 class="inspector-title">3. Export or Install</h2>
+        <span class="inspector-sub">Copy, download .zip, or mount directly</span>
       </div>
 
       <div class="inspector-scroll-body">
-        
-        <!-- Quick Download Bundle Button -->
+
+        <!-- Primary Export Actions -->
         <div class="inspector-quick-actions">
-          <button id="copyBareMdQuickBtn" class="btn-quick-md">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-            <span class="quick-md-label">Copy Bare .md</span>
+          <button id="copyBareMdQuickBtn" class="btn-quick-md" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <span class="quick-md-label">Copy SKILL.md</span>
           </button>
-          <button id="downloadBundleBtn" class="btn-download-bundle">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <button id="downloadBundleBtn" class="btn-download-bundle" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             <span>Download .zip</span>
           </button>
         </div>
 
+        <!-- Local Agent Installer Card -->
+        <section class="install-box" aria-label="Install to local agent environments">
+          <div class="install-box-header">
+            <span class="target-name">Install to Local Agents</span>
+            <span class="target-format">Optional 1-click mount</span>
+          </div>
+          <div class="install-targets-row">
+            <label class="install-check"><input type="checkbox" value="antigravity" checked> Antigravity</label>
+            <label class="install-check"><input type="checkbox" value="mcp" checked> Claude MCP</label>
+            <label class="install-check"><input type="checkbox" value="cursor" checked> Cursor</label>
+          </div>
+          <div class="install-actions-row">
+            <button id="previewInstallBtn" class="btn-copy-card" type="button">Preview Paths</button>
+            <button id="runInstallBtn" class="btn-install-now" type="button">Install Now</button>
+          </div>
+          <div id="installResultLog" class="install-result-log" hidden aria-live="polite"></div>
+        </section>
+
+        <!-- Target Artifact Cards -->
         <div class="export-cards-list">
-          <!-- Card 1: Claude Desktop (MCP) -->
-          <div class="export-card">
-            <div class="export-card-top">
-              <div class="export-target-info">
-                <span class="target-name">Claude Desktop & Cursor</span>
-                <span class="target-format">Model Context Protocol (MCP)</span>
-              </div>
-              <button class="btn-copy-card" data-copy="mcp">Copy Config</button>
-            </div>
-            <div class="export-code-snippet">
-              <code id="mcpConfigSnippet">"mcpServers": { ... }</code>
-            </div>
-          </div>
-
-          <!-- Card 2: Cursor & Windsurf Rules -->
-          <div class="export-card">
-            <div class="export-card-top">
-              <div class="export-target-info">
-                <span class="target-name">Cursor & Windsurf</span>
-                <span class="target-format">.cursorrules file</span>
-              </div>
-              <button class="btn-copy-card" data-copy="cursor">Copy Rules</button>
-            </div>
-            <div class="export-code-snippet">
-              <code id="cursorRulesSnippet"># Agent Rules for ...</code>
-            </div>
-          </div>
-
-          <!-- Card 3: Google Antigravity -->
           <div class="export-card">
             <div class="export-card-top">
               <div class="export-target-info">
                 <span class="target-name">Google Antigravity</span>
                 <span class="target-format">SKILL.md package</span>
               </div>
-              <button class="btn-copy-card" data-copy="antigravity">Copy SKILL.md</button>
+              <div class="card-btn-group">
+                <button class="btn-preview-card" type="button" data-preview="antigravity">Preview</button>
+                <button class="btn-copy-card" type="button" data-copy="antigravity">Copy</button>
+              </div>
             </div>
             <div class="export-code-snippet">
               <code id="antigravitySnippet">--- name: ... ---</code>
             </div>
           </div>
 
-          <!-- Card 4: OpenAI API -->
+          <div class="export-card">
+            <div class="export-card-top">
+              <div class="export-target-info">
+                <span class="target-name">Claude Desktop &amp; MCP</span>
+                <span class="target-format">claude_desktop_config.json</span>
+              </div>
+              <div class="card-btn-group">
+                <button class="btn-preview-card" type="button" data-preview="mcp">Preview</button>
+                <button class="btn-copy-card" type="button" data-copy="mcp">Copy</button>
+              </div>
+            </div>
+            <div class="export-code-snippet">
+              <code id="mcpConfigSnippet">"mcpServers": { ... }</code>
+            </div>
+          </div>
+
+          <div class="export-card">
+            <div class="export-card-top">
+              <div class="export-target-info">
+                <span class="target-name">Cursor &amp; Windsurf</span>
+                <span class="target-format">.cursorrules file</span>
+              </div>
+              <div class="card-btn-group">
+                <button class="btn-preview-card" type="button" data-preview="cursor">Preview</button>
+                <button class="btn-copy-card" type="button" data-copy="cursor">Copy</button>
+              </div>
+            </div>
+            <div class="export-code-snippet">
+              <code id="cursorRulesSnippet"># Agent Rules for ...</code>
+            </div>
+          </div>
+
           <div class="export-card">
             <div class="export-card-top">
               <div class="export-target-info">
                 <span class="target-name">OpenAI Function Calling</span>
-                <span class="target-format">tools.json array</span>
+                <span class="target-format">openai-tools.json</span>
               </div>
-              <button class="btn-copy-card" data-copy="openai">Copy JSON</button>
+              <div class="card-btn-group">
+                <button class="btn-preview-card" type="button" data-preview="openai">Preview</button>
+                <button class="btn-copy-card" type="button" data-copy="openai">Copy</button>
+              </div>
             </div>
             <div class="export-code-snippet">
               <code id="openaiSnippet">"tools": [ { "type": "function" ... } ]</code>
@@ -290,10 +404,9 @@
           </div>
         </div>
 
-        <!-- Raw Developer Inspector (Collapsible) -->
         <details class="developer-details">
           <summary class="dev-summary">
-            <span>View Developer AST & Raw IR</span>
+            <span>View Developer AST &amp; Raw IR</span>
           </summary>
           <pre id="developerRawIr" class="dev-ir-pre"></pre>
         </details>
@@ -303,55 +416,149 @@
 
   </div>
 
-  <!-- MODAL: CREATE CUSTOM SKILL -->
-  <div id="createModalOverlay" class="modal-backdrop" style="display: none;">
+  <!-- MODAL: UNIFIED CREATE SKILL STUDIO -->
+  <div id="createModalOverlay" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="createModalTitle">
     <div class="modal-dialog">
       <div class="modal-header">
         <div>
-          <h3 class="modal-title">Create Custom Skill</h3>
-          <p class="modal-sub">Describe what your AI assistant should do in plain English.</p>
+          <h3 id="createModalTitle" class="modal-title">Create a New Skill</h3>
+          <p class="modal-sub">Describe what you want in plain English, paste/upload existing code or an API spec, or start from a template.</p>
         </div>
-        <button id="closeCreateModalBtn" class="modal-close">&times;</button>
+        <button id="closeCreateModalBtn" class="modal-close" type="button" aria-label="Close modal">&times;</button>
+      </div>
+
+      <!-- Mode Switcher Tabs -->
+      <div class="modal-tabs" role="tablist" aria-label="Skill source type">
+        <button class="modal-tab active" type="button" role="tab" aria-selected="true" data-tab="describe">Plain English</button>
+        <button class="modal-tab" type="button" role="tab" aria-selected="false" data-tab="code">From Code / API Spec</button>
+        <button class="modal-tab" type="button" role="tab" aria-selected="false" data-tab="templates">Starter Templates</button>
       </div>
 
       <div class="modal-body">
-        <!-- Inspiration Chips -->
-        <div class="inspiration-chips-row">
-          <span class="chips-title">Inspirations:</span>
-          <button class="chip-item" data-prompt="UI/UX design reviewer that audits layouts against Apple HIG, checks WCAG color contrast, and suggests semantic layout refinements.">🎨 UI/UX Design & HIG Reviewer</button>
-          <button class="chip-item" data-prompt="Security auditor that scans repositories for leaked API secrets, insecure JWT configurations, and unvalidated redirects.">🛡️ Security & Secret Scanner</button>
-          <button class="chip-item" data-prompt="Database query optimizer that analyzes slow SQL queries, detects missing indexes, and suggests composite indexes.">📊 SQL Query Optimizer</button>
-          <button class="chip-item" data-prompt="Technical writer that audits API documentation, enforces sentence-case headings, and formats code diffs.">✍️ Technical Docs Writer</button>
-        </div>
+        <div id="modalErrorBanner" class="modal-error-banner" role="alert" hidden></div>
 
-        <div class="form-group">
-          <label for="modalPromptInput" class="form-label">Skill Goal & Directives:</label>
-          <textarea id="modalPromptInput" class="form-textarea" placeholder="E.g. A UI/UX design auditor that checks contrast, verifies 44pt touch targets against Apple HIG, and creates structured critique reports..."></textarea>
-        </div>
-
-        <!-- Engine & BYOK Settings -->
-        <div class="engine-row">
-          <div class="engine-select-wrap">
-            <label for="modalEngineSelect" class="form-label-mini">Synthesizer Engine:</label>
-            <select id="modalEngineSelect" class="form-select">
-              <option value="builtin">Built-in Semantic Synthesizer (Offline, $0, No Keys)</option>
-              <option value="gemini">Google Gemini (BYOK)</option>
-              <option value="openai">OpenAI GPT-4o (BYOK)</option>
-              <option value="ollama">Local Ollama (localhost:11434)</option>
-            </select>
+        <!-- TAB 1: PLAIN ENGLISH -->
+        <div id="tabPanelDescribe" class="tab-panel active">
+          <div class="inspiration-chips-row">
+            <span class="chips-title">Try an example:</span>
+            <button class="chip-item" type="button" data-prompt="UI/UX design reviewer that audits layouts against Apple HIG, checks WCAG color contrast, and suggests semantic layout refinements.">UI/UX &amp; HIG Reviewer</button>
+            <button class="chip-item" type="button" data-prompt="Security auditor that scans repositories for leaked API secrets, insecure JWT configurations, and unvalidated redirects.">Security Scanner</button>
+            <button class="chip-item" type="button" data-prompt="Database query optimizer that analyzes slow SQL queries, detects missing indexes, and suggests composite indexes.">SQL Optimizer</button>
+            <button class="chip-item" type="button" data-prompt="Technical writer that audits API documentation, enforces sentence-case headings, and formats code diffs.">Docs Writer</button>
           </div>
-          <div id="modalApiKeyGroup" class="engine-key-wrap" style="display: none;">
-            <label for="modalApiKeyInput" class="form-label-mini">API Key:</label>
-            <input type="password" id="modalApiKeyInput" class="form-input" placeholder="Paste API Key...">
+
+          <div class="form-group">
+            <label for="modalCustomNameInput" class="form-label">Skill Name (optional)</label>
+            <input id="modalCustomNameInput" class="form-input-text" type="text" placeholder="Auto-generated if left blank (e.g. Release Changelog Doctor)">
+          </div>
+
+          <div class="form-group">
+            <label for="modalPromptInput" class="form-label">Skill Goal &amp; Directives</label>
+            <textarea id="modalPromptInput" class="form-textarea" placeholder="E.g. A deployment assistant that checks cluster health, previews scale changes with dryRun, and requires confirmation before rolling back..."></textarea>
+          </div>
+
+          <div class="engine-row">
+            <div class="engine-select-wrap">
+              <label for="modalEngineSelect" class="form-label-mini">Synthesizer Engine</label>
+              <select id="modalEngineSelect" class="form-select">
+                <option value="builtin">Built-in Semantic Synthesizer (Offline, $0, No Keys)</option>
+                <option value="gemini">Google Gemini (BYOK)</option>
+                <option value="openai">OpenAI GPT-4o-mini (BYOK)</option>
+                <option value="ollama">Local Ollama (localhost:11434)</option>
+              </select>
+            </div>
+            <div id="modalApiKeyGroup" class="engine-key-wrap" hidden>
+              <label for="modalApiKeyInput" class="form-label-mini">API Key (used only for this request)</label>
+              <input type="password" id="modalApiKeyInput" class="form-input" placeholder="Paste API Key...">
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: FROM CODE / API SPEC -->
+        <div id="tabPanelCode" class="tab-panel" hidden>
+          <div class="code-toolbar">
+            <div class="code-samples-row">
+              <span class="chips-title">Load sample:</span>
+              <button class="chip-item sample-code-btn" type="button" data-sample="python">Python CLI</button>
+              <button class="chip-item sample-code-btn" type="button" data-sample="openapi">OpenAPI JSON</button>
+              <button class="chip-item sample-code-btn" type="button" data-sample="bash">Bash Script</button>
+            </div>
+            <label class="btn-upload-file" for="codeFileInput">
+              Upload File
+              <input id="codeFileInput" type="file" accept=".py,.ts,.js,.sh,.bash,.json,.yaml,.yml,.spec" hidden>
+            </label>
+          </div>
+
+          <div class="editor-grid">
+            <div class="form-group">
+              <label for="modalFilenameInput" class="form-label">Filename (guides parser)</label>
+              <input id="modalFilenameInput" class="form-input-text mono" type="text" value="script.py" placeholder="e.g. billing.py, openapi.json, runbook.yaml">
+            </div>
+            <div class="form-group">
+              <span class="form-label">Detected Input</span>
+              <div id="detectedFormatPill" class="detected-format-pill">Python AST / Type Hints</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="modalCodeInput" class="form-label">Source Code or OpenAPI / YAML Spec</label>
+            <textarea id="modalCodeInput" class="form-textarea tall mono" placeholder="Paste Python, TypeScript, Bash, OpenAPI JSON, or SkillSpec YAML here — or click Upload File above..."></textarea>
+          </div>
+        </div>
+
+        <!-- TAB 3: STARTER TEMPLATES -->
+        <div id="tabPanelTemplates" class="tab-panel" hidden>
+          <p class="tab-intro">Pick a verified template to inspect how PolySkill parses different input formats and enforces guardrails.</p>
+          <div class="template-picker-grid">
+            <button class="template-pick-card" type="button" data-template="stripe-billing">
+              <span class="pick-title">Stripe Billing Ops</span>
+              <span class="pick-meta">OpenAPI v3 JSON — 4 REST endpoints + refund/delete confirm gate</span>
+            </button>
+            <button class="template-pick-card" type="button" data-template="postgres-ops">
+              <span class="pick-title">Postgres Migrations</span>
+              <span class="pick-meta">Python CLI — backup, migration dry-run, vacuum &amp; drop gate</span>
+            </button>
+            <button class="template-pick-card" type="button" data-template="cloud-sre">
+              <span class="pick-title">AWS ECS Recovery</span>
+              <span class="pick-meta">SkillSpec YAML — workflow steps + rollback confirm gate</span>
+            </button>
+            <button class="template-pick-card" type="button" data-template="cloud-deploy">
+              <span class="pick-title">Cloud Deploy SDK</span>
+              <span class="pick-meta">TypeScript / JSDoc — typed interfaces + terminate cluster gate</span>
+            </button>
+            <button class="template-pick-card" type="button" data-template="ui-ux-design">
+              <span class="pick-title">UI/UX Design Reviewer</span>
+              <span class="pick-meta">Plain-English prompt — Apple HIG &amp; WCAG contrast tools</span>
+            </button>
           </div>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button id="cancelModalBtn" class="btn-dialog secondary">Cancel</button>
-        <button id="generateSkillSubmitBtn" class="btn-dialog primary">
+        <button id="cancelModalBtn" class="btn-dialog secondary" type="button">Cancel</button>
+        <button id="generateSkillSubmitBtn" class="btn-dialog primary" type="button">
           <span>Synthesize Skill</span>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ARTIFACT FILE PREVIEW -->
+  <div id="previewModalOverlay" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="previewModalTitle">
+    <div class="modal-dialog modal-dialog-wide">
+      <div class="modal-header">
+        <div>
+          <h3 id="previewModalTitle" class="modal-title">Generated Artifact Preview</h3>
+          <p id="previewModalPath" class="modal-sub mono">skills/example/SKILL.md</p>
+        </div>
+        <button id="closePreviewModalBtn" class="modal-close" type="button" aria-label="Close preview">&times;</button>
+      </div>
+      <div class="modal-body">
+        <pre id="previewModalCode" class="preview-code-pre"></pre>
+      </div>
+      <div class="modal-footer">
+        <button id="copyPreviewCodeBtn" class="btn-dialog primary" type="button">Copy File Contents</button>
+        <button id="donePreviewModalBtn" class="btn-dialog secondary" type="button">Close</button>
       </div>
     </div>
   </div>

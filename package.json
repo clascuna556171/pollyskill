@@ -8,7 +8,7 @@
   },
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/copy-assets.mjs",
     "dev": "tsx src/cli/index.ts",
     "test": "node scripts/run-tests.mjs",
     "ui": "tsx src/cli/index.ts ui",

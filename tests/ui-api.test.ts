@@ -46,6 +46,14 @@ describe('Studio API, Synthesis & ZIP Bundle Suite', () => {
     const baseUrl = `http://127.0.0.1:${address.port}`;
 
     try {
+      // 0. Static studio HTML serves the guided 3-step UX
+      const htmlRes = await fetch(`${baseUrl}/`);
+      assert.equal(htmlRes.status, 200);
+      const htmlText = await htmlRes.text();
+      assert.ok(htmlText.includes('Create or Pick Source'));
+      assert.ok(htmlText.includes('From Code / API Spec'));
+      assert.ok(htmlText.includes('Install to Local Agents'));
+
       // 1. Synthesize with custom display name
       const synthRes = await fetch(`${baseUrl}/api/synthesize`, {
         method: 'POST',
