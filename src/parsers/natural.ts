@@ -1,5 +1,46 @@
-import { SkillIR, SkillTool, ToolRiskLevel } from '../ir/types.js';
+import { JSONSchemaProperty, SkillIR, SkillTool, ToolRiskLevel } from '../ir/types.js';
 import { DEFAULT_GUARDRAIL_POLICY } from '../guardrails/synthesizer.js';
+
+interface GeminiApiResponse {
+  candidates?: Array<{
+    content?: {
+      parts?: Array<{ text?: string }>;
+    };
+  }>;
+}
+
+interface OpenAIApiResponse {
+  choices?: Array<{
+    message?: {
+      content?: string;
+    };
+  }>;
+}
+
+interface OllamaApiResponse {
+  response?: string;
+}
+
+interface RawSynthesizedTool {
+  name?: string;
+  description?: string;
+  riskLevel?: ToolRiskLevel;
+  parameters?: {
+    properties?: Record<string, JSONSchemaProperty>;
+    required?: string[];
+  };
+}
+
+interface RawSynthesizedIR {
+  name?: string;
+  displayName?: string;
+  description?: string;
+  category?: SkillIR['category'];
+  systemPrompt?: string;
+  workflowInstructions?: string;
+  triggerPhrases?: string[];
+  tools?: RawSynthesizedTool[];
+}
 
 export interface SynthesizeOptions {
   prompt: string;
@@ -298,11 +339,11 @@ export class NaturalLanguageSynthesizer {
       throw new Error(`Gemini API Error (${res.status}): ${await res.text()}`);
     }
 
-    const data = await res.json() as any;
+    const data = (await res.json()) as GeminiApiResponse;
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-    const parsed = JSON.parse(cleanJson);
-    return this.normalizeParsedIR(parsed, prompt, 'gemini');
+    const parsed = JSON.parse(cleanJson) as RawSynthesizedIR;
+    return this.normalizeParsedIR(parsed, prompt);
   }
 
   /**
@@ -329,10 +370,10 @@ export class NaturalLanguageSynthesizer {
       throw new Error(`OpenAI API Error (${res.status}): ${await res.text()}`);
     }
 
-    const data = await res.json() as any;
+    const data = (await res.json()) as OpenAIApiResponse;
     const content = data.choices?.[0]?.message?.content || '{}';
-    const parsed = JSON.parse(content);
-    return this.normalizeParsedIR(parsed, prompt, 'openai');
+    const parsed = JSON.parse(content) as RawSynthesizedIR;
+    return this.normalizeParsedIR(parsed, prompt);
   }
 
   /**
@@ -354,35 +395,39 @@ export class NaturalLanguageSynthesizer {
       throw new Error(`Ollama Connection Error: Ensure Ollama is running on localhost:11434 (${res.status})`);
     }
 
-    const data = await res.json() as any;
-    const parsed = JSON.parse(data.response);
-    return this.normalizeParsedIR(parsed, prompt, 'ollama');
+    const data = (await res.json()) as OllamaApiResponse;
+    const parsed = JSON.parse(data.response || '{}') as RawSynthesizedIR;
+    return this.normalizeParsedIR(parsed, prompt);
   }
 
-  private static normalizeParsedIR(parsed: any, originalPrompt: string, source: string): SkillIR {
-    const tools: SkillTool[] = (parsed.tools || []).map((t: any) => ({
-      id: t.name,
-      name: t.name,
-      description: t.description,
-      riskLevel: t.riskLevel || 'read_only',
-      parameters: {
-        type: 'object',
-        properties: t.parameters?.properties || {},
-        required: t.parameters?.required || [],
-        additionalProperties: false
-      },
-      execution: { type: 'cli', command: `echo "Executing ${t.name}"` },
-      guardrails: { timeoutSeconds: 30 }
-    }));
+  private static normalizeParsedIR(parsed: RawSynthesizedIR, originalPrompt: string): SkillIR {
+    const displayName = parsed.displayName || 'Custom Skill';
+    const tools: SkillTool[] = (parsed.tools || []).map((t, index) => {
+      const toolName = t.name || `tool_${index + 1}`;
+      return {
+        id: toolName,
+        name: toolName,
+        description: t.description || `Execute ${toolName}`,
+        riskLevel: t.riskLevel || 'read_only',
+        parameters: {
+          type: 'object',
+          properties: t.parameters?.properties || {},
+          required: t.parameters?.required || [],
+          additionalProperties: false
+        },
+        execution: { type: 'cli', command: `echo "Executing ${toolName}"` },
+        guardrails: { timeoutSeconds: 30 }
+      };
+    });
 
     return {
       version: '1.0.0',
       schemaVersion: '1.0.0',
       name: (parsed.name || 'custom-skill').toLowerCase().replace(/[^a-z0-9_-]/g, '-'),
-      displayName: parsed.displayName || 'Custom Skill',
+      displayName,
       description: parsed.description || originalPrompt,
       category: parsed.category || 'developer_tool',
-      systemPrompt: parsed.systemPrompt || `You are an assistant equipped with ${parsed.displayName}.`,
+      systemPrompt: parsed.systemPrompt || `You are an assistant equipped with ${displayName}.`,
       workflowInstructions: parsed.workflowInstructions || '1. Analyze user request.\n2. Run relevant tools.',
       triggerPhrases: parsed.triggerPhrases || tools.map(t => `run ${t.name}`),
       tools,
